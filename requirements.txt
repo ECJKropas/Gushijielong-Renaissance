@@ -5,6 +5,7 @@
 annotated-doc=0.0.4=py312hca03da5_0
 annotated-types=0.6.0=py312hca03da5_1
 anyio=4.10.0=py312hca03da5_0
+bcrypt=5.0.0=py312h931abed_0
 bzip2=1.0.8=h80987f9_6
 ca-certificates=2025.12.2=hca03da5_0
 certifi=2026.01.04=py312hca03da5_0

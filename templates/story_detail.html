@@ -1,0 +1,117 @@
+{% extends "base.html" %}
+
+{% block title %}{{ story.title }} - 故事接龙网站{% endblock %}
+
+{% block content %}
+    <div class="story-detail-container">
+        <div class="story-main">
+            <section class="story-info">
+                <h2>{{ story.title }}</h2>
+                <div class="story-content">
+                    <p>{{ story.content }}</p>
+                    <small>作者: {{ story_author }} | 创建于: {{ story.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                </div>
+            </section>
+            
+            <section class="chapters">
+                <h3>故事章节</h3>
+                {% if chapters %}
+                    {% for chapter in chapters %}
+                        <div class="chapter" id="chapter-{{ chapter.id }}">
+                            <h4>第 {{ loop.index }} 章 - 作者: {{ chapter.author }}</h4>
+                            <p>{{ chapter.content }}</p>
+                            <small>发布于: {{ chapter.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            
+                            <!-- 章节评论 -->
+                            <div class="chapter-comments">
+                                <h5>评论</h5>
+                                {% if chapter_comments.get(chapter.id) %}
+                                    <ul>
+                                        {% for comment in chapter_comments[chapter.id] %}
+                                            <li>
+                                                <strong>{{ comment.author }}:</strong> {{ comment.content }}
+                                                <small>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p>暂无评论</p>
+                                {% endif %}
+                                
+                                <!-- 添加评论表单 -->
+                                {% if current_user %}
+                                    <form action="/chapters/{{ chapter.id }}/comments" method="post">
+                                        <div>
+                                            <label for="comment-content-{{ chapter.id }}">评论内容:</label>
+                                            <textarea id="comment-content-{{ chapter.id }}" name="content" rows="2" required></textarea>
+                                        </div>
+                                        <button type="submit">发表评论</button>
+                                    </form>
+                                {% else %}
+                                    <p class="login-prompt">请先<a href="/login">登录</a>后发表评论</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>还没有章节，快来续写故事吧！</p>
+                {% endif %}
+                
+                <!-- 添加新章节表单 -->
+                <div class="add-chapter">
+                    <h3>续写故事</h3>
+                    {% if current_user %}
+                        <form action="/stories/{{ story.id }}/chapters" method="post">
+                            <div>
+                                <label for="chapter-content">章节内容:</label>
+                                <textarea id="chapter-content" name="content" rows="5" required></textarea>
+                            </div>
+                            <button type="submit">发表章节</button>
+                        </form>
+                    {% else %}
+                        <p class="login-prompt">请先<a href="/login">登录</a>后续写故事</p>
+                    {% endif %}
+                </div>
+            </section>
+        </div>
+        
+        <aside class="discussion-sidebar">
+            <section class="discussion-section">
+                <h3>讨论区</h3>
+                {% if discussions %}
+                    <ul>
+                        {% for discussion in discussions %}
+                            <li>
+                                <h4>{{ discussion.title }}</h4>
+                                <p>{{ discussion.content[:100] }}...</p>
+                                <small>作者: {{ discussion.author }} | {{ discussion.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>还没有讨论主题</p>
+                {% endif %}
+                
+                <!-- 创建讨论主题表单 -->
+                <div class="add-discussion">
+                    <h4>创建讨论主题</h4>
+                    {% if current_user %}
+                        <form action="/discussion" method="post">
+                            <div>
+                                <label for="discussion-title">标题:</label>
+                                <input type="text" id="discussion-title" name="title" required>
+                            </div>
+                            <div>
+                                <label for="discussion-content">内容:</label>
+                                <textarea id="discussion-content" name="content" rows="3" required></textarea>
+                            </div>
+                            <button type="submit">创建讨论</button>
+                        </form>
+                    {% else %}
+                        <p class="login-prompt">请先<a href="/login">登录</a>后创建讨论</p>
+                    {% endif %}
+                </div>
+            </section>
+        </aside>
+    </div>
+{% endblock %}

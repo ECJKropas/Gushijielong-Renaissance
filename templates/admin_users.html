@@ -1,0 +1,143 @@
+{% extends "admin_base.html" %}
+
+{% block title %}用户管理 - 故事接龙网站{% endblock %}
+
+{% block content %}
+    <div class="admin-header">
+        <h2>👥 用户管理</h2>
+        <p>管理系统中的所有用户，包括权限设置和用户信息管理。</p>
+    </div>
+    
+    <div class="admin-stats" style="margin-bottom: 2rem;">
+        <div class="stat-card">
+            <h4>总用户数</h4>
+            <div class="stat-number">{{ users|length }}</div>
+        </div>
+        <div class="stat-card">
+            <h4>管理员数</h4>
+            <div class="stat-number">{{ users|selectattr("role", "equalto", "admin")|list|length }}</div>
+        </div>
+        <div class="stat-card">
+            <h4>普通用户数</h4>
+            <div class="stat-number">{{ users|selectattr("role", "equalto", "user")|list|length }}</div>
+        </div>
+    </div>
+    
+    {% if users %}
+        <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1.5rem; color: #2d3748;">📋 用户列表</h3>
+            
+            <div style="overflow-x: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>用户名</th>
+                            <th>邮箱</th>
+                            <th>角色</th>
+                            <th>注册时间</th>
+                            <th>活跃次数</th>
+                            <th>积分</th>
+                            <th>信用分</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in users %}
+                        <tr>
+                            <td><strong>{{ user.id }}</strong></td>
+                            <td>
+                                <strong style="color: #2d3748;">{{ user.username }}</strong>
+                                {% if user.username == current_user.username %}
+                                    <span style="color: #667eea; font-size: 0.8rem;">(当前用户)</span>
+                                {% endif %}
+                            </td>
+                            <td style="color: #4a5568;">{{ user.email }}</td>
+                            <td>
+                                <span class="role-badge role-{{ user.role }}">
+                                    {{ "管理员" if user.role == "admin" else "用户" }}
+                                </span>
+                            </td>
+                            <td style="color: #718096; font-size: 0.9rem;">
+                                {{ user.registered_at.strftime('%Y-%m-%d %H:%M') }}
+                            </td>
+                            <td>
+                                <span style="color: #48bb78; font-weight: 600;">{{ user.active_count }}</span>
+                            </td>
+                            <td>
+                                <span style="color: #f6ad55; font-weight: 600;">{{ user.points }}</span>
+                            </td>
+                            <td>
+                                <span style="color: {% if user.credit >= 80 %}#48bb78{% elif user.credit >= 60 %}#f6ad55{% else %}#f56565{% endif %}; font-weight: 600;">
+                                    {{ "%.1f"|format(user.credit) }}
+                                </span>
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    {% if user.role == "user" %}
+                                        <form action="/admin/make_admin/{{ user.id }}" method="post" style="display: inline;">
+                                            <button type="submit" class="btn-admin btn-admin-success" 
+                                                    onclick="return confirm('确定要将 {{ user.username }} 设置为管理员吗？')"
+                                                    title="设置为管理员">
+                                                👑 设管
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        {% if user.username != current_user.username %}
+                                            <form action="/admin/remove_admin/{{ user.id }}" method="post" style="display: inline;">
+                                                <button type="submit" class="btn-admin btn-admin-primary" 
+                                                        onclick="return confirm('确定要移除 {{ user.username }} 的管理员权限吗？')"
+                                                        title="移除管理员权限">
+                                                    🔓 移管
+                                                </button>
+                                            </form>
+                                        {% endif %}
+                                    {% endif %}
+                                    
+                                    {% if user.username != current_user.username %}
+                                        <form action="/admin/delete/user/{{ user.id }}" method="post" style="display: inline;">
+                                            <button type="submit" class="btn-admin btn-admin-danger" 
+                                                    onclick="return confirm('确定要删除用户 {{ user.username }} 吗？此操作不可恢复！')"
+                                                    title="删除用户">
+                                                🗑️ 删除
+                                            </button>
+                                        </form>
+                                    {% else %}
+                                        <button class="btn-admin" disabled title="不能删除当前用户" style="background: #cbd5e0; color: white;">
+                                            🚫 删除
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div style="background: white; padding: 3rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">👥</div>
+            <h3 style="color: #4a5568; margin-bottom: 1rem;">暂无用户</h3>
+            <p style="color: #718096;">系统中还没有任何用户注册。</p>
+        </div>
+    {% endif %}
+    
+    <div style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 2rem; border-radius: 12px; margin-top: 2rem;">
+        <h4 style="color: #2d3748; margin-bottom: 1rem;">💡 用户管理提示</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <div style="background: white; padding: 1rem; border-radius: 8px;">
+                <h5 style="color: #667eea; margin-bottom: 0.5rem;">👑 管理员权限</h5>
+                <p style="color: #4a5568; font-size: 0.9rem;">管理员拥有系统的所有管理权限，请谨慎分配。</p>
+            </div>
+            <div style="background: white; padding: 1rem; border-radius: 8px;">
+                <h5 style="color: #48bb78; margin-bottom: 0.5rem;">📊 用户统计</h5>
+                <p style="color: #4a5568; font-size: 0.9rem;">活跃次数反映用户参与度，积分和信用分用于用户评级。</p>
+            </div>
+            <div style="background: white; padding: 1rem; border-radius: 8px;">
+                <h5 style="color: #f6ad55; margin-bottom: 0.5rem;">⚠️ 删除用户</h5>
+                <p style="color: #4a5568; font-size: 0.9rem;">删除用户将同时删除该用户的所有内容，操作不可恢复。</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

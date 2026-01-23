@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}管理后台 - 故事接龙网站{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', path='/css/styles.css') }}">
+    <style>
+        .admin-container {
+            display: grid;
+            grid-template-columns: 250px 1fr;
+            gap: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .admin-sidebar {
+            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            height: fit-content;
+            color: white;
+        }
+        
+        .admin-sidebar h3 {
+            margin-bottom: 1.5rem;
+            color: white;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #4a5568;
+        }
+        
+        .admin-sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+        
+        .admin-sidebar li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .admin-sidebar a {
+            color: #cbd5e0;
+            text-decoration: none;
+            padding: 0.75rem 1rem;
+            border-radius: 8px;
+            display: block;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .admin-sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            color: white;
+            transform: translateX(5px);
+        }
+        
+        .admin-sidebar a.active {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        
+        .admin-main {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+        
+        .admin-footer {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #e2e8f0;
+            text-align: center;
+            color: #718096;
+            font-size: 0.9rem;
+        }
+        
+        .admin-logout {
+            margin-top: 2rem;
+            padding-top: 1rem;
+            border-top: 1px solid #4a5568;
+        }
+        
+        .admin-logout a {
+            background: linear-gradient(135deg, #f56565 0%, #e53e3e 100%);
+            color: white;
+            text-align: center;
+        }
+        
+        .admin-logout a:hover {
+            background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+            transform: translateX(0);
+        }
+        
+        /* 响应式管理界面 */
+        @media (max-width: 768px) {
+            .admin-container {
+                grid-template-columns: 1fr;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            .admin-sidebar {
+                order: 2;
+            }
+            
+            .admin-main {
+                order: 1;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <h1>故事接龙网站 - 管理后台</h1>
+        <nav>
+            <a href="/">返回网站首页</a>
+            {% if current_user %}
+                <span>欢迎，{{ current_user.username }} ({{ current_user.role }})</span>
+                <a href="/logout">退出登录</a>
+            {% endif %}
+        </nav>
+    </header>
+    
+    <div class="admin-container">
+        <aside class="admin-sidebar">
+            <h3>管理菜单</h3>
+            <ul>
+                <li><a href="/admin" class="{% if request.url.path == '/admin' %}active{% endif %}">📊 仪表盘</a></li>
+                <li><a href="/admin/users" class="{% if request.url.path == '/admin/users' %}active{% endif %}">👥 用户管理</a></li>
+                <li><a href="/admin/stories" class="{% if request.url.path == '/admin/stories' %}active{% endif %}">📚 故事管理</a></li>
+                <li><a href="/admin/discussions" class="{% if request.url.path == '/admin/discussions' %}active{% endif %}">💬 讨论管理</a></li>
+            </ul>
+            
+            <div class="admin-logout">
+                <a href="/logout">🚪 退出登录</a>
+            </div>
+        </aside>
+        
+        <main class="admin-main">
+            {% block content %}{% endblock %}
+            
+            <div class="admin-footer">
+                <p>&copy; 2024 故事接龙网站管理后台 | 系统版本 1.0</p>
+            </div>
+        </main>
+    </div>
+    
+    <script src="{{ url_for('static', path='/js/scripts.js') }}"></script>
+    <script src="{{ url_for('static', path='/js/admin.js') }}"></script>
+</body>
+</html>

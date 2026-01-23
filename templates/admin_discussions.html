@@ -1,0 +1,114 @@
+{% extends "admin_base.html" %}
+
+{% block title %}讨论管理 - 故事接龙网站{% endblock %}
+
+{% block content %}
+    <div class="admin-header">
+        <h2>💬 讨论管理</h2>
+        <p>管理系统中的所有讨论主题，包括删除不需要的内容。</p>
+    </div>
+    
+    <div class="admin-stats" style="margin-bottom: 2rem;">
+        <div class="stat-card">
+            <h4>总讨论数</h4>
+            <div class="stat-number">{{ discussions|length }}</div>
+        </div>
+        <div class="stat-card">
+            <h4>总评论数</h4>
+            <div class="stat-number">{{ discussions|sum(attribute='comments')|length }}</div>
+        </div>
+        <div class="stat-card">
+            <h4>活跃讨论数</h4>
+            <div class="stat-number">{{ discussions|selectattr('comments')|list|length }}</div>
+        </div>
+    </div>
+    
+    {% if discussions %}
+        <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1.5rem; color: #2d3748;">💭 讨论列表</h3>
+            
+            <div style="overflow-x: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>标题</th>
+                            <th>作者</th>
+                            <th>评论数</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for discussion in discussions %}
+                        <tr>
+                            <td><strong>{{ discussion.id }}</strong></td>
+                            <td>
+                                <strong style="color: #2d3748;">
+                                    <a href="/discussions/{{ discussion.id }}" target="_blank" style="color: inherit; text-decoration: none;">
+                                        {{ discussion.title }}
+                                    </a>
+                                </strong>
+                            </td>
+                            <td>
+                                <span style="color: #667eea; font-weight: 600;">{{ discussion.author_name }}</span>
+                            </td>
+                            <td>
+                                <span style="background: {% if discussion.comments|length > 0 %}#e6fffa{% else %}#f7fafc{% endif %}; 
+                                             color: {% if discussion.comments|length > 0 %}#234e52{% else %}#718096{% endif %}; 
+                                             padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">
+                                    {{ discussion.comments|length }} 评论
+                                </span>
+                            </td>
+                            <td style="color: #718096; font-size: 0.9rem;">
+                                {{ discussion.created_at.strftime('%Y-%m-%d %H:%M') }}
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <a href="/discussions/{{ discussion.id }}" target="_blank" class="btn-admin btn-admin-primary" title="查看讨论">
+                                        👁️ 查看
+                                    </a>
+                                    <form action="/admin/delete/discussion/{{ discussion.id }}" method="post" style="display: inline;">
+                                        <button type="submit" class="btn-admin btn-admin-danger" 
+                                                onclick="return confirm('确定要删除讨论《{{ discussion.title }}》吗？此操作将同时删除所有相关评论，且不可恢复！')"
+                                                title="删除讨论">
+                                            🗑️ 删除
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div style="background: white; padding: 3rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">💬</div>
+            <h3 style="color: #4a5568; margin-bottom: 1rem;">暂无讨论</h3>
+            <p style="color: #718096;">系统中还没有任何用户创建讨论。</p>
+            <a href="/create_discussion" target="_blank" class="btn-admin btn-admin-primary" style="margin-top: 1rem;">
+                ✨ 创建第一个讨论
+            </a>
+        </div>
+    {% endif %}
+    
+    <div style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 2rem; border-radius: 12px; margin-top: 2rem;">
+        <h4 style="color: #2d3748; margin-bottom: 1rem;">💡 讨论管理提示</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <div style="background: white; padding: 1rem; border-radius: 8px;">
+                <h5 style="color: #667eea; margin-bottom: 0.5rem;">💭 讨论内容</h5>
+                <p style="color: #4a5568; font-size: 0.9rem;">点击讨论标题可以查看详细内容和所有评论。</p>
+            </div>
+            <div style="background: white; padding: 1rem; border-radius: 8px;">
+                <h5 style="color: #f6ad55; margin-bottom: 0.5rem;">⚠️ 删除讨论</h5>
+                <p style="color: #4a5568; font-size: 0.9rem;">删除讨论将同时删除所有相关评论，操作不可恢复。</p>
+            </div>
+            <div style="background: white; padding: 1rem; border-radius: 8px;">
+                <h5 style="color: #48bb78; margin-bottom: 0.5rem;">📊 活跃统计</h5>
+                <p style="color: #4a5568; font-size: 0.9rem;">评论数帮助您了解讨论的活跃程度和用户参与度。</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

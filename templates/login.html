@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}登录 - 故事接龙网站{% endblock %}
+
+{% block content %}
+    <section class="login-form">
+        <h2>用户登录</h2>
+        
+        {% if error %}
+            <div class="error-message">{{ error }}</div>
+        {% endif %}
+        
+        <form action="/login" method="post">
+            <div>
+                <label for="username">用户名:</label>
+                <input type="text" id="username" name="username" required>
+            </div>
+            <div>
+                <label for="password">密码:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            <button type="submit">登录</button>
+        </form>
+        
+        <p class="register-link">还没有账号？<a href="/register">立即注册</a></p>
+    </section>
+{% endblock %}

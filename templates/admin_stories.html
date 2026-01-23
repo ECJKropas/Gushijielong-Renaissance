@@ -1,0 +1,116 @@
+{% extends "admin_base.html" %}
+
+{% block title %}故事管理 - 故事接龙网站{% endblock %}
+
+{% block content %}
+    <div class="admin-header">
+        <h2>📚 故事管理</h2>
+        <p>管理系统中的所有故事，包括删除不需要的内容。</p>
+    </div>
+    
+    <div class="admin-stats" style="margin-bottom: 2rem;">
+        <div class="stat-card">
+            <h4>总故事数</h4>
+            <div class="stat-number">{{ stories|length }}</div>
+        </div>
+        <div class="stat-card">
+            <h4>总章节数</h4>
+            <div class="stat-number">{{ stories|sum(attribute='chapters')|length }}</div>
+        </div>
+        <div class="stat-card">
+            <h4>总评论数</h4>
+            <div class="stat-number">{{ stories|sum(attribute='comments')|length }}</div>
+        </div>
+    </div>
+    
+    {% if stories %}
+        <div style="background: white; padding: 2rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); margin-bottom: 2rem;">
+            <h3 style="margin-bottom: 1.5rem; color: #2d3748;">📖 故事列表</h3>
+            
+            <div style="overflow-x: auto;">
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>标题</th>
+                            <th>作者</th>
+                            <th>章节数</th>
+                            <th>创建时间</th>
+                            <th>更新时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for story in stories %}
+                        <tr>
+                            <td><strong>{{ story.id }}</strong></td>
+                            <td>
+                                <strong style="color: #2d3748;">
+                                    <a href="/stories/{{ story.id }}" target="_blank" style="color: inherit; text-decoration: none;">
+                                        {{ story.title }}
+                                    </a>
+                                </strong>
+                            </td>
+                            <td>
+                                <span style="color: #667eea; font-weight: 600;">{{ story.author.username }}</span>
+                            </td>
+                            <td>
+                                <span style="background: #e6fffa; color: #234e52; padding: 0.25rem 0.5rem; border-radius: 12px; font-size: 0.85rem; font-weight: 600;">
+                                    {{ story.chapters|length }} 章节
+                                </span>
+                            </td>
+                            <td style="color: #718096; font-size: 0.9rem;">
+                                {{ story.created_at.strftime('%Y-%m-%d %H:%M') }}
+                            </td>
+                            <td style="color: #718096; font-size: 0.9rem;">
+                                {{ story.updated_at.strftime('%Y-%m-%d %H:%M') }}
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                                    <a href="/stories/{{ story.id }}" target="_blank" class="btn-admin btn-admin-primary" title="查看故事">
+                                        👁️ 查看
+                                    </a>
+                                    <form action="/admin/delete/story/{{ story.id }}" method="post" style="display: inline;">
+                                        <button type="submit" class="btn-admin btn-admin-danger" 
+                                                onclick="return confirm('确定要删除故事《{{ story.title }}》吗？此操作将同时删除所有相关章节和评论，且不可恢复！')"
+                                                title="删除故事">
+                                            🗑️ 删除
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    {% else %}
+        <div style="background: white; padding: 3rem; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); text-align: center;">
+            <div style="font-size: 4rem; margin-bottom: 1rem;">📚</div>
+            <h3 style="color: #4a5568; margin-bottom: 1rem;">暂无故事</h3>
+            <p style="color: #718096;">系统中还没有任何用户创建故事。</p>
+            <a href="/create_story" target="_blank" class="btn-admin btn-admin-primary" style="margin-top: 1rem;">
+                ✨ 创建第一个故事
+            </a>
+        </div>
+    {% endif %}
+    
+    <div style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 2rem; border-radius: 12px; margin-top: 2rem;">
+        <h4 style="color: #2d3748; margin-bottom: 1rem;">💡 故事管理提示</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem;">
+            <div style="background: white; padding: 1rem; border-radius: 8px;">
+                <h5 style="color: #667eea; margin-bottom: 0.5rem;">📖 故事内容</h5>
+                <p style="color: #4a5568; font-size: 0.9rem;">点击故事标题可以查看详细内容，包括所有章节和评论。</p>
+            </div>
+            <div style="background: white; padding: 1rem; border-radius: 8px;">
+                <h5 style="color: #f6ad55; margin-bottom: 0.5rem;">⚠️ 删除故事</h5>
+                <p style="color: #4a5568; font-size: 0.9rem;">删除故事将同时删除所有相关章节和评论，操作不可恢复。</p>
+            </div>
+            <div style="background: white; padding: 1rem; border-radius: 8px;">
+                <h5 style="color: #48bb78; margin-bottom: 0.5rem;">📊 数据统计</h5>
+                <p style="color: #4a5568; font-size: 0.9rem;">章节数和评论数帮助您了解故事的活跃程度。</p>
+            </div>
+        </div>
+    </div>
+{% endblock %}

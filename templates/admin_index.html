@@ -1,0 +1,167 @@
+{% extends "admin_base.html" %}
+
+{% block title %}管理仪表盘 - 故事接龙网站{% endblock %}
+
+{% block content %}
+    <div class="admin-header">
+        <h2>📊 管理仪表盘</h2>
+        <p>欢迎回来，{{ current_user.username }}！这里是系统的整体概览。</p>
+    </div>
+    
+    <div class="admin-stats">
+        <div class="stat-card">
+            <h4>总用户数</h4>
+            <div class="stat-number">{{ stats.total_users }}</div>
+        </div>
+        <div class="stat-card">
+            <h4>活跃用户数</h4>
+            <div class="stat-number">{{ stats.active_users }}</div>
+        </div>
+        <div class="stat-card">
+            <h4>总故事数</h4>
+            <div class="stat-number">{{ stats.total_stories }}</div>
+        </div>
+        <div class="stat-card">
+            <h4>总章节数</h4>
+            <div class="stat-number">{{ stats.total_chapters }}</div>
+        </div>
+        <div class="stat-card">
+            <h4>总讨论数</h4>
+            <div class="stat-number">{{ stats.total_discussions }}</div>
+        </div>
+        <div class="stat-card">
+            <h4>总评论数</h4>
+            <div class="stat-number">{{ stats.total_comments }}</div>
+        </div>
+    </div>
+    
+    <div class="recent-activity">
+        <h3>🔄 最近活动</h3>
+        
+        <div class="activity-section">
+            <h4>👥 最近注册的用户</h4>
+            {% if stats.recent_users %}
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>用户名</th>
+                            <th>邮箱</th>
+                            <th>角色</th>
+                            <th>注册时间</th>
+                            <th>积分</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for user in stats.recent_users %}
+                        <tr>
+                            <td>
+                                <strong>{{ user.username }}</strong>
+                            </td>
+                            <td>{{ user.email }}</td>
+                            <td>
+                                <span class="role-badge role-{{ user.role }}">
+                                    {{ "管理员" if user.role == "admin" else "用户" }}
+                                </span>
+                            </td>
+                            <td>{{ user.registered_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <span style="color: #48bb78; font-weight: 600;">{{ user.points }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div style="text-align: center; padding: 2rem; color: #718096;">
+                    <p>暂无最近注册的用户</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="activity-section">
+            <h4>📚 最近创建的故事</h4>
+            {% if stats.recent_stories %}
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>标题</th>
+                            <th>作者</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for story in stats.recent_stories %}
+                        <tr>
+                            <td>
+                                <a href="/stories/{{ story.id }}" target="_blank" style="color: #667eea; font-weight: 600;">
+                                    {{ story.title }}
+                                </a>
+                            </td>
+                            <td>{{ story.author.username }}</td>
+                            <td>{{ story.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <a href="/stories/{{ story.id }}" target="_blank" class="btn-admin btn-admin-primary">
+                                    查看
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div style="text-align: center; padding: 2rem; color: #718096;">
+                    <p>暂无最近创建的故事</p>
+                </div>
+            {% endif %}
+        </div>
+        
+        <div class="activity-section">
+            <h4>💬 最近创建的讨论</h4>
+            {% if stats.recent_discussions %}
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>标题</th>
+                            <th>作者</th>
+                            <th>创建时间</th>
+                            <th>操作</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for discussion in stats.recent_discussions %}
+                        <tr>
+                            <td>
+                                <a href="/discussions/{{ discussion.id }}" target="_blank" style="color: #667eea; font-weight: 600;">
+                                    {{ discussion.title }}
+                                </a>
+                            </td>
+                            <td>{{ discussion.author_name }}</td>
+                            <td>{{ discussion.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                            <td>
+                                <a href="/discussions/{{ discussion.id }}" target="_blank" class="btn-admin btn-admin-primary">
+                                    查看
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            {% else %}
+                <div style="text-align: center; padding: 2rem; color: #718096;">
+                    <p>暂无最近创建的讨论</p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+    
+    <div style="background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%); padding: 2rem; border-radius: 12px; margin-top: 2rem;">
+        <h4 style="color: #2d3748; margin-bottom: 1rem;">🚀 快速操作</h4>
+        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+            <a href="/admin/users" class="btn-admin btn-admin-primary">👥 管理用户</a>
+            <a href="/admin/stories" class="btn-admin btn-admin-primary">📚 管理故事</a>
+            <a href="/admin/discussions" class="btn-admin btn-admin-primary">💬 管理讨论</a>
+            <a href="/" target="_blank" class="btn-admin btn-admin-success">🌐 查看网站</a>
+        </div>
+    </div>
+{% endblock %}
