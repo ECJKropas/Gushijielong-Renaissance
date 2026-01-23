@@ -40,7 +40,7 @@ async def read_story(request: Request, story_id: int, db: Session = Depends(get_
         {
             "request": request,
             "story": story,
-            "story_author": story_author_name,
+            "story_author_name": story_author_name,
             "chapters": chapters,
             "chapter_comments": chapter_comments,
             "current_user": current_user

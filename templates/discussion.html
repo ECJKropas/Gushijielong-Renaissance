@@ -33,7 +33,7 @@
                     <div class="discussion-item">
                         <h3>{{ discussion.title }}</h3>
                         <p>{{ discussion.content }}</p>
-                        <small>作者: {{ discussion.author }} | {{ discussion.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        <small>作者: {{ discussion.author_name }} | {{ discussion.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                         
                         <!-- 讨论评论 -->
                         <div class="discussion-comments">
@@ -42,7 +42,7 @@
                                 <ul>
                                     {% for comment in discussion_comments[discussion.id] %}
                                         <li>
-                                            <strong>{{ comment.author }}:</strong> {{ comment.content }}
+                                            <strong>{{ comment.author_name }}:</strong> {{ comment.content }}
                                             <small>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                                         </li>
                                     {% endfor %}

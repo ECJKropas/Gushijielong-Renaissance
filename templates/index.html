@@ -28,11 +28,10 @@
         {% if stories %}
             <ul>
                 {% for story in stories %}
-                    {% set story_author = "未知作者" %}
                     <li>
                         <h3><a href="/stories/{{ story.id }}">{{ story.title }}</a></h3>
                         <p>{{ story.content[:100] }}...</p>
-                        <small>作者: {{ story_author }} | 创建于: {{ story.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        <small>作者: {{ story.author_name }} | 创建于: {{ story.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                     </li>
                 {% endfor %}
             </ul>
