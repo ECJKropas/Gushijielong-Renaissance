@@ -18,7 +18,7 @@
                 {% if chapters %}
                     {% for chapter in chapters %}
                         <div class="chapter" id="chapter-{{ chapter.id }}">
-                            <h4>第 {{ loop.index }} 章 - 作者: {{ chapter.author }}</h4>
+                            <h4>第 {{ loop.index }} 章 - 作者: {{ chapter.author_name }}</h4>
                             <p>{{ chapter.content }}</p>
                             <small>发布于: {{ chapter.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                             
@@ -29,7 +29,7 @@
                                     <ul>
                                         {% for comment in chapter_comments[chapter.id] %}
                                             <li>
-                                                <strong>{{ comment.author }}:</strong> {{ comment.content }}
+                                                <strong>{{ comment.author_name }}:</strong> {{ comment.content }}
                                                 <small>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                                             </li>
                                         {% endfor %}
@@ -40,7 +40,7 @@
                                 
                                 <!-- 添加评论表单 -->
                                 {% if current_user %}
-                                    <form action="/chapters/{{ chapter.id }}/comments" method="post">
+                                    <form action="/stories/{{ story.id }}/chapters/{{ chapter.id }}/comment" method="post">
                                         <div>
                                             <label for="comment-content-{{ chapter.id }}">评论内容:</label>
                                             <textarea id="comment-content-{{ chapter.id }}" name="content" rows="2" required></textarea>

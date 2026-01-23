@@ -34,11 +34,20 @@ async def read_root(request: Request, db: Session = Depends(get_db)):
     stories = get_all_stories(db)
     discussions = get_all_discussions(db)
     current_user = await get_current_user(request, db)
+    
+    # 为故事添加作者信息
+    from crud import get_user_by_id
+    story_with_authors = []
+    for story in stories:
+        author = get_user_by_id(db, story.author_id)
+        story.author_name = author.username if author else "未知作者"
+        story_with_authors.append(story)
+    
     return templates.TemplateResponse(
         "index.html",
         {
             "request": request,
-            "stories": stories,
+            "stories": story_with_authors,
             "discussions": discussions,
             "current_user": current_user
         }

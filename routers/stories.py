@@ -22,23 +22,31 @@ async def read_story(request: Request, story_id: int, db: Session = Depends(get_
     story = get_story_by_id(db, story_id)
     if not story:
         return RedirectResponse(url="/")
+    
+    # 获取故事作者
+    from crud import get_user_by_id
+    story_author = get_user_by_id(db, story.author_id)
+    story_author_name = story_author.username if story_author else "未知作者"
+    
     chapters = get_chapters_by_story(db, story_id)
     chapter_comments = {}
     for chapter in chapters:
         comments = get_comments_by_chapter(db, chapter.id)
         chapter_comments[chapter.id] = comments
+    
     current_user = await get_current_user(request, db)
     return templates.TemplateResponse(
         "story_detail.html",
         {
             "request": request,
             "story": story,
+            "story_author": story_author_name,
             "chapters": chapters,
             "chapter_comments": chapter_comments,
             "current_user": current_user
         }
     )
-@router.post("/stories/{story_id}/continue")
+@router.post("/stories/{story_id}/chapters")
 
 
 async def continue_story(
@@ -47,7 +55,7 @@ async def continue_story(
     content: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    current_user = await get_current_user(request)
+    current_user = await get_current_user(request, db)
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
     story = get_story_by_id(db, story_id)

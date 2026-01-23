@@ -10,7 +10,7 @@
         <div class="create-discussion">
             <h3>创建新讨论</h3>
             {% if current_user %}
-                <form action="/discussion" method="post">
+                <form action="/create-discussion" method="post">
                     <div>
                         <label for="title">讨论标题:</label>
                         <input type="text" id="title" name="title" required>
@@ -53,7 +53,7 @@
                             
                             <!-- 添加评论表单 -->
                             {% if current_user %}
-                                <form action="/discussion/{{ discussion.id }}/comments" method="post">
+                                <form action="/discussions/{{ discussion.id }}/comment" method="post">
                                     <div>
                                         <label for="comment-content-{{ discussion.id }}">评论内容:</label>
                                         <textarea id="comment-content-{{ discussion.id }}" name="content" rows="2" required></textarea>

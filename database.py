@@ -155,7 +155,7 @@ def migrate_data_from_memory(data_store):
                 story_id=chapter_data.story_id,
                 content=chapter_data.content,
                 author_id=chapter_data.author_id,
-                author_name=chapter_data.author,
+                author_name=chapter_data.author.username,
                 created_at=chapter_data.created_at
             )
             db.add(chapter)
@@ -166,7 +166,7 @@ def migrate_data_from_memory(data_store):
                 chapter_id=comment_data.chapter_id,
                 content=comment_data.content,
                 author_id=comment_data.author_id,
-                author_name=comment_data.author,
+                author_name=comment_data.author.username,
                 created_at=comment_data.created_at
             )
             db.add(comment)
@@ -177,7 +177,7 @@ def migrate_data_from_memory(data_store):
                 title=discussion_data.title,
                 content=discussion_data.content,
                 author_id=discussion_data.author_id,
-                author_name=discussion_data.author,
+                author_name=discussion_data.author.username,
                 created_at=discussion_data.created_at
             )
             db.add(discussion)
@@ -188,7 +188,7 @@ def migrate_data_from_memory(data_store):
                 discussion_id=comment_data.discussion_id,
                 content=comment_data.content,
                 author_id=comment_data.author_id,
-                author_name=comment_data.author,
+                author_name=comment_data.author.username,
                 created_at=comment_data.created_at
             )
             db.add(comment)
