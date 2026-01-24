@@ -1,3 +1,5 @@
+import os
+from dotenv import load_dotenv
 from sqlalchemy import (
     create_engine, Column, Integer, String, 
     DateTime, Text, Float, ForeignKey
@@ -5,8 +7,32 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
-# 创建数据库引擎
-engine = create_engine('sqlite:///story_chain.db', echo=True)
+
+# 加载环境变量
+load_dotenv()
+
+# 从环境变量获取数据库配置
+MYSQL_HOST = os.getenv("MYSQL_HOST")
+MYSQL_PORT = os.getenv("MYSQL_PORT")
+MYSQL_USER = os.getenv("MYSQL_USER")
+MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
+MYSQL_DATABASE = os.getenv("MYSQL_DATABASE")
+
+# 创建MySQL数据库引擎
+DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}?charset=utf8mb4"
+# 尝试使用NullPool，避免连接池管理的查询开销
+from sqlalchemy.pool import NullPool
+engine = create_engine(
+    DATABASE_URL,
+    echo=False,  # 关闭SQL日志输出，减少查询次数
+    poolclass=NullPool,  # 使用NullPool，每次请求创建新连接，避免连接池查询
+    connect_args={
+        'charset': 'utf8mb4',
+        'connect_timeout': 10,
+        'read_timeout': 30,
+        'write_timeout': 30,
+    }  # 连接参数优化
+)
 # 创建会话工厂
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # 创建基础模型
@@ -22,9 +48,9 @@ class UserDB(Base):
     password_hash = Column(String(255), nullable=False)
     role = Column(String(20), default="user")
     registered_at = Column(DateTime, default=datetime.now)
-    active_count = Column(Integer, default=0)
-    points = Column(Integer, default=0)
-    credit = Column(Float, default=100.0)
+    active_count = Column(Integer, default=0, nullable=False)
+    points = Column(Integer, default=0, nullable=False)
+    credit = Column(Float, default=100.0, nullable=False)
     # 关系
     stories = relationship("StoryDB", back_populates="author")
     chapters = relationship("StoryChapterDB", back_populates="author")

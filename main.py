@@ -8,6 +8,11 @@ from models import get_current_user
 from sqlalchemy.orm import Session
 from templates_config import templates
 import markdown
+import threading
+import time
+import atexit
+from local_cache import local_cache
+from database import SessionLocal
 
 def generate_story_excerpt(content):
     """生成故事摘要"""
@@ -31,6 +36,29 @@ def generate_story_excerpt(content):
     # 转换为HTML
     return markdown.markdown(excerpt)
 
+# 定时同步函数
+def sync_to_db_periodically():
+    """每分钟同步一次数据到数据库"""
+    while True:
+        local_cache.sync_to_db()
+        time.sleep(60)  # 每分钟同步一次
+
+# 服务器关闭时的同步函数
+def sync_on_shutdown():
+    """服务器关闭时同步数据到数据库"""
+    print("正在同步数据到数据库...")
+    local_cache.sync_to_db()
+    print("数据同步完成")
+
+# 初始化本地缓存
+def init_local_cache():
+    """初始化本地缓存，从数据库加载数据"""
+    db = SessionLocal()
+    try:
+        local_cache.load_from_db(db)
+    finally:
+        db.close()
+
 # 导入路由
 from routers import stories, comments, discussions, auth, admin
 # 创建FastAPI应用
@@ -45,8 +73,19 @@ app.add_middleware(
 )
 # 配置静态文件
 app.mount("/static", StaticFiles(directory="static"), name="static")
-# 初始化数据库
-init_db()
+# 初始化数据库 - 注释掉自动调用，避免消耗查询次数
+# init_db()
+
+# 初始化本地缓存
+init_local_cache()
+
+# 启动定时同步线程
+sync_thread = threading.Thread(target=sync_to_db_periodically, daemon=True)
+sync_thread.start()
+
+# 注册服务器关闭时的同步函数
+atexit.register(sync_on_shutdown)
+
 # 包含路由
 app.include_router(auth.router)
 app.include_router(stories.router)
@@ -55,14 +94,15 @@ app.include_router(discussions.router)
 app.include_router(admin.router)
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request, db: Session = Depends(get_db)):
+    # 从本地缓存获取所有故事
     stories = get_all_stories(db)
     discussions = get_all_discussions(db)
     current_user = await get_current_user(request, db)
     
-    # 为故事添加作者信息和渲染内容
-    from crud import get_user_by_id
+    # 为故事添加渲染内容
     story_with_authors = []
     for story in stories:
+        # 从本地缓存获取作者
         author = get_user_by_id(db, story.author_id)
         story.author_name = author.username if author else "未知作者"
         # 渲染故事摘要为HTML用于显示
