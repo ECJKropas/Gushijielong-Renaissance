@@ -7,7 +7,7 @@
         <h2>创建新故事</h2>
         
         {% if current_user %}
-            <form action="/stories" method="post">
+            <form action="/create-story" method="post">
                 <div>
                     <label for="title">故事标题:</label>
                     <input type="text" id="title" name="title" required>
