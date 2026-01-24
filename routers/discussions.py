@@ -12,6 +12,7 @@ from crud import (
     update_user_active_count
 )
 from sqlalchemy.orm import Session
+import markdown
 router = APIRouter()
 @router.get("/discussions", response_class=HTMLResponse)
 
@@ -21,7 +22,12 @@ async def list_discussions(request: Request, db: Session = Depends(get_db)):
     # 获取所有讨论的评论
     discussion_comments = {}
     for discussion in discussions:
+        # 渲染讨论内容为HTML
+        discussion.content_html = markdown.markdown(discussion.content)
         comments = get_comments_by_discussion(db, discussion.id)
+        # 渲染评论内容为HTML
+        for comment in comments:
+            comment.content_html = markdown.markdown(comment.content)
         discussion_comments[discussion.id] = comments
     current_user = await get_current_user(request, db)
     return templates.TemplateResponse(
@@ -40,7 +46,12 @@ async def read_discussion(request: Request, discussion_id: int, db: Session = De
     discussion = get_discussion_by_id(db, discussion_id)
     if not discussion:
         return RedirectResponse(url="/discussions", status_code=303)
+    # 渲染讨论内容为HTML
+    discussion.content_html = markdown.markdown(discussion.content)
     comments = get_comments_by_discussion(db, discussion_id)
+    # 渲染评论内容为HTML
+    for comment in comments:
+        comment.content_html = markdown.markdown(comment.content)
     current_user = await get_current_user(request, db)
     return templates.TemplateResponse(
         "discussion_detail.html",

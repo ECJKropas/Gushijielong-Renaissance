@@ -128,11 +128,18 @@ async def delete_story(
         return RedirectResponse(url="/login", status_code=303)
     story = db.query(StoryDB).filter(StoryDB.id == story_id).first()
     if story:
-        # 删除相关的章节和评论
+        # 先获取所有相关章节的ID
+        chapter_ids = db.query(StoryChapterDB.id).filter(StoryChapterDB.story_id == story_id).all()
+        chapter_ids = [chapter.id for chapter in chapter_ids]
+        
+        # 删除相关评论
+        if chapter_ids:
+            db.query(ChapterCommentDB).filter(ChapterCommentDB.chapter_id.in_(chapter_ids)).delete(synchronize_session=False)
+        
+        # 删除相关章节
         db.query(StoryChapterDB).filter(StoryChapterDB.story_id == story_id).delete()
-        db.query(ChapterCommentDB).filter(ChapterCommentDB.chapter_id.in_(
-            db.query(StoryChapterDB.id).filter(StoryChapterDB.story_id == story_id)
-        )).delete(synchronize_session=False)
+        
+        # 删除故事
         db.delete(story)
         db.commit()
     return RedirectResponse(url="/admin/stories", status_code=303)

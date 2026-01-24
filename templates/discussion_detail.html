@@ -7,7 +7,7 @@
         <h2>{{ discussion.title }}</h2>
         
         <div class="discussion-content">
-            <p>{{ discussion.content }}</p>
+            {{ discussion.content_html|safe }}
             <small>作者: {{ discussion.author_name }} | 创建于: {{ discussion.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
         </div>
         
@@ -19,7 +19,7 @@
                 <ul>
                     {% for comment in comments %}
                         <li>
-                            <strong>{{ comment.author_name }}:</strong> {{ comment.content }}
+                            <strong>{{ comment.author_name }}:</strong> {{ comment.content_html|safe }}
                             <small>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                         </li>
                     {% endfor %}

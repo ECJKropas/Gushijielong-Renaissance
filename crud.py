@@ -89,9 +89,21 @@ def get_all_stories(db: Session):
 
 
 def delete_story(db: Session, story_id: int):
-    """删除故事"""
+    """删除故事，包括相关章节和评论"""
     story = get_story_by_id(db, story_id)
     if story:
+        # 先获取所有相关章节的ID
+        chapter_ids = db.query(StoryChapterDB.id).filter(StoryChapterDB.story_id == story_id).all()
+        chapter_ids = [chapter.id for chapter in chapter_ids]
+        
+        # 删除相关评论
+        if chapter_ids:
+            db.query(ChapterCommentDB).filter(ChapterCommentDB.chapter_id.in_(chapter_ids)).delete(synchronize_session=False)
+        
+        # 删除相关章节
+        db.query(StoryChapterDB).filter(StoryChapterDB.story_id == story_id).delete()
+        
+        # 删除故事
         db.delete(story)
         db.commit()
         return True
@@ -127,9 +139,13 @@ def get_chapter_by_id(db: Session, chapter_id: int):
 
 
 def delete_chapter(db: Session, chapter_id: int):
-    """删除章节"""
+    """删除章节，包括相关评论"""
     chapter = get_chapter_by_id(db, chapter_id)
     if chapter:
+        # 删除相关评论
+        db.query(ChapterCommentDB).filter(ChapterCommentDB.chapter_id == chapter_id).delete(synchronize_session=False)
+        
+        # 删除章节
         db.delete(chapter)
         db.commit()
         return True
@@ -195,9 +211,13 @@ def get_discussion_by_id(db: Session, discussion_id: int):
 
 
 def delete_discussion(db: Session, discussion_id: int):
-    """删除讨论主题"""
+    """删除讨论主题，包括相关评论"""
     discussion = get_discussion_by_id(db, discussion_id)
     if discussion:
+        # 删除相关评论
+        db.query(DiscussionCommentDB).filter(DiscussionCommentDB.discussion_id == discussion_id).delete(synchronize_session=False)
+        
+        # 删除讨论主题
         db.delete(discussion)
         db.commit()
         return True

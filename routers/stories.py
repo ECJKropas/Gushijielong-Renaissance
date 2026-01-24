@@ -14,6 +14,7 @@ from crud import (
     get_all_stories
 )
 from sqlalchemy.orm import Session
+import markdown
 router = APIRouter()
 @router.get("/stories/{story_id}", response_class=HTMLResponse)
 
@@ -28,10 +29,19 @@ async def read_story(request: Request, story_id: int, db: Session = Depends(get_
     story_author = get_user_by_id(db, story.author_id)
     story_author_name = story_author.username if story_author else "未知作者"
     
+    # 渲染故事内容为HTML
+    story.content_html = markdown.markdown(story.content)
+    
     chapters = get_chapters_by_story(db, story_id)
     chapter_comments = {}
     for chapter in chapters:
+        # 渲染章节内容为HTML
+        chapter.content_html = markdown.markdown(chapter.content)
+        # 获取章节评论
         comments = get_comments_by_chapter(db, chapter.id)
+        # 渲染评论内容为HTML
+        for comment in comments:
+            comment.content_html = markdown.markdown(comment.content)
         chapter_comments[chapter.id] = comments
     
     # 获取讨论数据

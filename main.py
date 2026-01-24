@@ -7,6 +7,7 @@ from crud import get_all_stories, get_all_discussions
 from models import get_current_user
 from sqlalchemy.orm import Session
 from templates_config import templates
+import markdown
 # 导入路由
 from routers import stories, comments, discussions, auth, admin
 # 创建FastAPI应用
@@ -35,12 +36,14 @@ async def read_root(request: Request, db: Session = Depends(get_db)):
     discussions = get_all_discussions(db)
     current_user = await get_current_user(request, db)
     
-    # 为故事添加作者信息
+    # 为故事添加作者信息和渲染内容
     from crud import get_user_by_id
     story_with_authors = []
     for story in stories:
         author = get_user_by_id(db, story.author_id)
         story.author_name = author.username if author else "未知作者"
+        # 渲染故事内容为HTML用于显示
+        story.content_html = markdown.markdown(story.content)
         story_with_authors.append(story)
     
     return templates.TemplateResponse(

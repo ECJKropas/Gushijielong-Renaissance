@@ -8,7 +8,7 @@
             <section class="story-info">
                 <h2>{{ story.title }}</h2>
                 <div class="story-content">
-                    <p>{{ story.content }}</p>
+                    {{ story.content_html|safe }}
                     <small>作者: {{ story_author_name }} | 创建于: {{ story.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                 </div>
             </section>
@@ -19,7 +19,7 @@
                     {% for chapter in chapters %}
                         <div class="chapter" id="chapter-{{ chapter.id }}">
                             <h4>第 {{ loop.index }} 章 - 作者: {{ chapter.author_name }}</h4>
-                            <p>{{ chapter.content }}</p>
+                            {{ chapter.content_html|safe }}
                             <small>发布于: {{ chapter.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                             
                             <!-- 章节评论 -->
@@ -29,7 +29,7 @@
                                     <ul>
                                         {% for comment in chapter_comments[chapter.id] %}
                                             <li>
-                                                <strong>{{ comment.author_name }}:</strong> {{ comment.content }}
+                                                <strong>{{ comment.author_name }}:</strong> {{ comment.content_html|safe }}
                                                 <small>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                                             </li>
                                         {% endfor %}
