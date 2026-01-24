@@ -3,47 +3,168 @@
 {% block title %}{{ discussion.title }} - 讨论区 - 故事接龙网站{% endblock %}
 
 {% block content %}
-    <section class="discussion-detail-page">
-        <h2>{{ discussion.title }}</h2>
-        
-        <div class="discussion-content">
-            {{ discussion.content_html|safe }}
-            <small>作者: {{ discussion.author_name }} | 创建于: {{ discussion.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-        </div>
-        
-        <!-- 讨论评论 -->
-        <div class="discussion-comments">
-            <h3>评论 ({{ comments|length }})</h3>
+    <div class="main-content">
+        <section class="discussion-detail-page">
+            <h2>{{ discussion.title }}</h2>
             
-            {% if comments %}
-                <ul>
-                    {% for comment in comments %}
-                        <li>
-                            <strong>{{ comment.author_name }}:</strong> {{ comment.content_html|safe }}
-                            <small>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                        </li>
-                    {% endfor %}
-                </ul>
-            {% else %}
-                <p>暂无评论</p>
-            {% endif %}
+            <div class="discussion-content">
+                {{ discussion.content_html|safe }}
+                <small>作者: {{ discussion.author_name }} | 创建于: {{ discussion.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+            </div>
             
-            <!-- 添加评论表单 -->
-            {% if current_user %}
-                <form action="/discussions/{{ discussion.id }}/comment" method="post">
-                    <div>
-                        <label for="comment-content">评论内容:</label>
-                        <textarea id="comment-content" name="content" rows="2" required></textarea>
-                    </div>
-                    <button type="submit">发表评论</button>
-                </form>
-            {% else %}
-                <p class="login-prompt">请先<a href="/login">登录</a>后发表评论</p>
-            {% endif %}
+            <!-- 讨论评论 -->
+            <div class="discussion-comments">
+                <h3>评论 ({{ comments|length }})</h3>
+                
+                {% if comments %}
+                    <ul>
+                        {% for comment in comments %}
+                            <li>
+                                <strong>{{ comment.author_name }}:</strong> {{ comment.content_html|safe }}
+                                <small>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    <p>暂无评论</p>
+                {% endif %}
+                
+                <!-- 添加评论表单 -->
+                {% if current_user %}
+                    <form action="/discussions/{{ discussion.id }}/comment" method="post">
+                        <div>
+                            <label for="comment-content">评论内容:</label>
+                            <textarea id="comment-content" name="content" rows="2" required></textarea>
+                        </div>
+                        <button type="submit">发表评论</button>
+                    </form>
+                {% else %}
+                    <p class="login-prompt">请先<a href="/login">登录</a>后发表评论</p>
+                {% endif %}
+            </div>
+            
+            <div class="back-link">
+                <a href="/discussions" class="btn-back">← 返回讨论区</a>
+            </div>
+        </section>
+    </div>
+    
+    <aside class="sidebar">
+        <!-- 侧边栏内容 -->
+        <div class="discussion-card">
+            <h3>相关链接</h3>
+            <ul style="list-style: none; padding: 0;">
+                <li style="margin-bottom: 1rem;">
+                    <a href="/discussions" style="color: #74b9ff; text-decoration: none; font-weight: bold;">
+                        ← 返回讨论区
+                    </a>
+                </li>
+                <li>
+                    <a href="/" style="color: #74b9ff; text-decoration: none; font-weight: bold;">
+                        🏠 首页
+                    </a>
+                </li>
+            </ul>
         </div>
+    </aside>
+    
+    <style>
+        /* 讨论详情页样式 */
+        .discussion-detail-page {
+            padding: 2rem;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+            border: 2px solid #a29bfe;
+        }
         
-        <div class="back-link">
-            <a href="/discussions" class="btn-back">← 返回讨论区</a>
-        </div>
-    </section>
+        .discussion-detail-page h2 {
+            color: #a29bfe;
+            margin-bottom: 1.5rem;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* 讨论内容样式 */
+        .discussion-content {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background-color: rgba(236, 240, 241, 0.8);
+            border-radius: 16px;
+        }
+        
+        /* 评论区样式 */
+        .discussion-comments {
+            margin-bottom: 2rem;
+            padding: 1.5rem;
+            background-color: rgba(255, 245, 238, 0.9);
+            border-radius: 16px;
+            border: 2px dashed #ffb6c1;
+        }
+        
+        .discussion-comments h3 {
+            color: #ff6b9d;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+        }
+        
+        /* 评论列表样式 */
+        .discussion-comments ul {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .discussion-comments li {
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border-left: 4px solid #ffd93d;
+        }
+        
+        .discussion-comments li:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .discussion-comments li strong {
+            color: #6c5ce7;
+            margin-right: 0.5rem;
+        }
+        
+        .discussion-comments li small {
+            display: block;
+            margin-top: 0.5rem;
+            color: #95a5a6;
+            font-size: 0.85rem;
+        }
+        
+        /* 返回按钮样式 */
+        .back-link {
+            text-align: center;
+        }
+        
+        .btn-back {
+            display: inline-block;
+            background-color: #74b9ff;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-back:hover {
+            background-color: #0984e3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+    </style>
 {% endblock %}

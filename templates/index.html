@@ -3,35 +3,48 @@
 {% block title %}首页 - 故事接龙网站{% endblock %}
 
 {% block content %}
-    <section class="create-story-link">
-        <h2>所有故事</h2>
-        {% if current_user %}
-            <p><a href="/create-story" class="create-story-btn">创建新故事</a></p>
-        {% else %}
-            <p>请先<a href="/login">登录</a>或<a href="/register">注册</a>后创建故事</p>
-        {% endif %}
-    </section>
+    <div class="main-content">
+        <section class="create-story-link">
+            <h2>所有故事</h2>
+            {% if current_user %}
+                <p><a href="/create-story" class="create-story-btn">创建新故事</a></p>
+            {% else %}
+                <p>请先<a href="/login">登录</a>或<a href="/register">注册</a>后创建故事</p>
+            {% endif %}
+        </section>
+        
+        <section class="story-list">
+            {% if stories %}
+                <ul>
+                    {% for story in stories %}
+                        <li>
+                            <h3><a href="/stories/{{ story.id }}">{{ story.title }}</a></h3>
+                            {% if story.tags %}
+                                <div class="story-tags">
+                                    {% for tag in story.tags %}
+                                        <span class="tag">{{ tag }}</span>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <div class="story-excerpt">{{ story.content_html|safe }}</div>
+                            <small>作者: {{ story.author_name }} | 创建于: {{ story.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>还没有故事，快来创建第一个故事吧！</p>
+            {% endif %}
+        </section>
+    </div>
     
-    <section class="story-list">
-        {% if stories %}
-            <ul>
-                {% for story in stories %}
-                    <li>
-                        <h3><a href="/stories/{{ story.id }}">{{ story.title }}</a></h3>
-                        {% if story.tags %}
-                            <div class="story-tags">
-                                {% for tag in story.tags %}
-                                    <span class="tag">{{ tag }}</span>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                        <div class="story-excerpt">{{ story.content_html|safe }}</div>
-                        <small>作者: {{ story.author_name }} | 创建于: {{ story.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                    </li>
-                {% endfor %}
-            </ul>
-        {% else %}
-            <p>还没有故事，快来创建第一个故事吧！</p>
-        {% endif %}
-    </section>
+    <aside class="sidebar">
+        <!-- 侧边栏内容可以在这里添加 -->
+        <div class="discussion-card">
+            <h3>讨论区</h3>
+            <p>加入我们的讨论，分享你的想法和创意！</p>
+            <div class="view-all-discussions">
+                <a href="/discussions" class="btn-primary">查看讨论</a>
+            </div>
+        </div>
+    </aside>
 {% endblock %}

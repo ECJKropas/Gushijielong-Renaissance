@@ -3,98 +3,346 @@
 {% block title %}{{ story.title }} - 故事接龙网站{% endblock %}
 
 {% block content %}
-    <section class="story-detail">
-        <h1>{{ story.title }}</h1>
-        
-        <!-- 显示标签 -->
-        {% if story.tags %}
-            <div class="story-tags">
-                {% for tag in story.tags %}
-                    <span class="tag">{{ tag }}</span>
-                {% endfor %}
+    <div class="main-content">
+        <section class="story-detail">
+            <h1>{{ story.title }}</h1>
+            
+            <!-- 显示标签 -->
+            {% if story.tags %}
+                <div class="story-tags">
+                    {% for tag in story.tags %}
+                        <span class="tag">{{ tag }}</span>
+                    {% endfor %}
+                </div>
+            {% endif %}
+            
+            <div class="story-meta">
+                <small>作者: {{ story_author_name }} | 创建于: {{ story.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
             </div>
-        {% endif %}
+            
+            <div class="story-content">
+                {{ story.content_html|safe }}
+            </div>
+        </section>
         
-        <div class="story-meta">
-            <small>作者: {{ story_author_name }} | 创建于: {{ story.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-        </div>
-        
-        <div class="story-content">
-            {{ story.content_html|safe }}
-        </div>
-    </section>
-    
-    <section class="story-chapters">
-        <h2>故事章节</h2>
-        {% if chapters %}
-            <ol>
-                {% for chapter in chapters %}
-                    <li id="{{ chapter.id }}">
-                        <h3>第 {{ loop.index + 1 }} 章 - 作者: {{ chapter.author_name }}</h3>
-                        <div class="chapter-content">{{ chapter.content_html|safe }}</div>
-                        <small>发布于: {{ chapter.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                        
-                        <!-- 章节评论 -->
-                        <div class="chapter-comments">
-                            <h4>评论</h4>
-                            {% if chapter_comments[chapter.id] %}
-                                <ul>
-                                    {% for comment in chapter_comments[chapter.id] %}
-                                        <li>
-                                            <strong>{{ comment.author_name }}:</strong> {{ comment.content_html|safe }}
-                                            <small> - {{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p>还没有评论，快来抢沙发吧！</p>
-                            {% endif %}
+        <section class="story-chapters">
+            <h2>故事章节</h2>
+            {% if chapters %}
+                <div class="chapters-list">
+                    {% for chapter in chapters %}
+                        <div class="chapter-container" id="{{ chapter.id }}">
+                            <h3>第 {{ loop.index + 1 }} 章 - 作者: {{ chapter.author_name }}</h3>
+                            <div class="chapter-content">{{ chapter.content_html|safe }}</div>
+                            <small>发布于: {{ chapter.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                             
-                            <!-- 添加评论表单 -->
-                            {% if current_user %}
-                                <form action="/stories/{{ story.id }}/chapters/{{ chapter.id }}/comment" method="post">
-                                    <textarea name="content" rows="3" placeholder="写下你的评论..."></textarea>
-                                    <button type="submit">发表评论</button>
-                                </form>
-                            {% else %}
-                                <p>请先<a href="/login">登录</a>后评论</p>
-                            {% endif %}
+                            <!-- 章节评论 -->
+                            <div class="chapter-comments">
+                                <h4>评论</h4>
+                                {% if chapter_comments[chapter.id] %}
+                                    <ul>
+                                        {% for comment in chapter_comments[chapter.id] %}
+                                            <li>
+                                                <strong>{{ comment.author_name }}:</strong> {{ comment.content_html|safe }}
+                                                <small> - {{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p>还没有评论，快来抢沙发吧！</p>
+                                {% endif %}
+                                
+                                <!-- 添加评论表单 -->
+                                {% if current_user %}
+                                    <form action="/stories/{{ story.id }}/chapters/{{ chapter.id }}/comment" method="post">
+                                        <textarea name="content" rows="3" placeholder="写下你的评论..."></textarea>
+                                        <button type="submit">发表评论</button>
+                                    </form>
+                                {% else %}
+                                    <p>请先<a href="/login">登录</a>后评论</p>
+                                {% endif %}
+                            </div>
                         </div>
-                    </li>
-                {% endfor %}
-            </ol>
-        {% else %}
-            <p>还没有章节，快来续写这个故事吧！</p>
-        {% endif %}
-        
-        <!-- 续写章节表单 -->
-        {% if current_user %}
-            <div class="continue-story">
-                <h3>续写故事</h3>
-                <form action="/stories/{{ story.id }}/chapters" method="post">
-                    <textarea name="content" rows="5" placeholder="写下你的续写..."></textarea>
-                    <button type="submit">发布章节</button>
-                </form>
+                    {% endfor %}
+                </div>
+            {% else %}
+                <p>还没有章节，快来续写这个故事吧！</p>
+            {% endif %}
+            
+            <!-- 续写章节表单 -->
+            {% if current_user %}
+                <div class="continue-story">
+                    <h3>续写故事</h3>
+                    <form action="/stories/{{ story.id }}/chapters" method="post">
+                        <textarea name="content" rows="5" placeholder="写下你的续写..."></textarea>
+                        <button type="submit">发布章节</button>
+                    </form>
+                </div>
+            {% else %}
+                <p>请先<a href="/login">登录</a>后续写故事</p>
+            {% endif %}
+        </section>
+    </div>
+    
+    <aside class="sidebar">
+        <!-- 讨论版展示链接 -->
+        <div class="discussion-card">
+            <h3>热门讨论</h3>
+            <div class="discussion-list-small">
+                {% if discussions %}
+                    {% for discussion in discussions[:5] %} <!-- 只显示前5个讨论 -->
+                        <div class="discussion-item-small">
+                            <h4><a href="/discussions/{{ discussion.id }}">{{ discussion.title }}</a></h4>
+                            <p class="discussion-excerpt">{{ discussion.content[:100] }}...</p>
+                            <small>作者: {{ discussion.author_name }}</small>
+                        </div>
+                    {% endfor %}
+                {% else %}
+                    <p>暂无讨论</p>
+                {% endif %}
             </div>
-        {% else %}
-            <p>请先<a href="/login">登录</a>后续写故事</p>
-        {% endif %}
-    </section>
+            <div class="view-all-discussions">
+                <a href="/discussions" class="btn-primary">查看全部讨论</a>
+            </div>
+        </div>
+    </aside>
     
     <style>
-        /* 标签样式 */
-        .story-tags {
-            margin: 10px 0;
+        /* 故事详情页样式 */
+        .story-detail {
+            margin-bottom: 2rem;
+            padding: 2rem;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
         }
         
-        .tag {
-            display: inline-block;
-            background-color: #f0f0f0;
+        .story-detail h1 {
+            color: #ff6b6b;
+            margin-bottom: 1rem;
+            font-size: 2.5rem;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .story-tags {
+            margin: 1rem 0;
+        }
+        
+        /* 章节列表样式 */
+        .chapters-list {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+        
+        /* 章节容器样式 - 半透明悬浮 */
+        .chapter-container {
+            padding: 2rem;
+            background-color: rgba(255, 255, 255, 0.85);
+            border-radius: 20px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            transition: all 0.3s ease;
+            border: 2px solid #ffeaa7;
+        }
+        
+        .chapter-container:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+            background-color: rgba(255, 255, 255, 0.95);
+        }
+        
+        .chapter-container h3 {
+            color: #74b9ff;
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+        
+        .chapter-content {
+            margin: 1rem 0;
+            line-height: 1.8;
+        }
+        
+        /* 续写故事样式 */
+        .continue-story {
+            margin-top: 2rem;
+            padding: 2rem;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+        }
+        
+        .continue-story h3 {
+            color: #00b894;
+            margin-bottom: 1rem;
+        }
+        
+        /* 讨论版卡片样式 */
+        .discussion-card {
+            padding: 2rem;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 20px;
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+            margin-bottom: 2rem;
+            border: 2px solid #a29bfe;
+        }
+        
+        .discussion-card h3 {
+            color: #a29bfe;
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            text-align: center;
+        }
+        
+        /* 小讨论列表样式 */
+        .discussion-list-small {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .discussion-item-small {
+            padding: 1rem;
+            background-color: rgba(236, 240, 241, 0.8);
             border-radius: 12px;
-            padding: 4px 12px;
-            margin-right: 8px;
-            font-size: 14px;
-            color: #333;
+            transition: all 0.3s ease;
+        }
+        
+        .discussion-item-small:hover {
+            transform: translateY(-3px);
+            background-color: rgba(236, 240, 241, 1);
+        }
+        
+        .discussion-item-small h4 {
+            margin-bottom: 0.5rem;
+            font-size: 1.1rem;
+        }
+        
+        .discussion-item-small h4 a {
+            color: #74b9ff;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        .discussion-item-small h4 a:hover {
+            color: #0984e3;
+            text-decoration: underline;
+        }
+        
+        .discussion-excerpt {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 0.5rem;
+            line-height: 1.4;
+        }
+        
+        .discussion-item-small small {
+            color: #999;
+            font-size: 0.8rem;
+        }
+        
+        /* 查看全部讨论按钮 */
+        .view-all-discussions {
+            text-align: center;
+        }
+        
+        .btn-primary {
+            display: inline-block;
+            background-color: #74b9ff;
+            color: white;
+            padding: 0.75rem 1.5rem;
+            text-decoration: none;
+            border-radius: 25px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .btn-primary:hover {
+            background-color: #0984e3;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        /* 评论区样式 */
+        .chapter-comments {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background-color: rgba(255, 245, 238, 0.9);
+            border-radius: 16px;
+            border: 2px dashed #ffb6c1;
+        }
+        
+        .chapter-comments h4 {
+            color: #ff6b9d;
+            margin-bottom: 1rem;
+            font-size: 1.3rem;
+        }
+        
+        /* 评论列表样式 */
+        .chapter-comments ul {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+        
+        .chapter-comments li {
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.8);
+            border-radius: 12px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border-left: 4px solid #ffd93d;
+        }
+        
+        .chapter-comments li:hover {
+            transform: translateX(5px);
+            box-shadow: 0 5px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        .chapter-comments li strong {
+            color: #6c5ce7;
+            margin-right: 0.5rem;
+        }
+        
+        .chapter-comments li small {
+            display: block;
+            margin-top: 0.5rem;
+            color: #95a5a6;
+            font-size: 0.85rem;
+        }
+        
+        /* 评论表单样式 */
+        .chapter-comments form {
+            margin: 0;
+            padding: 1rem;
+            background-color: rgba(255, 255, 255, 0.9);
+            border-radius: 12px;
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .chapter-comments textarea {
+            resize: vertical;
+            min-height: 80px;
+            border-color: #ffb6c1;
+        }
+        
+        .chapter-comments button {
+            background-color: #ff6b9d;
+            border: none;
+            padding: 0.5rem 1.25rem;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .chapter-comments button:hover {
+            background-color: #ee5a82;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(238, 90, 130, 0.3);
         }
     </style>
 {% endblock %}
