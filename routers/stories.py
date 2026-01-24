@@ -34,6 +34,10 @@ async def read_story(request: Request, story_id: int, db: Session = Depends(get_
         comments = get_comments_by_chapter(db, chapter.id)
         chapter_comments[chapter.id] = comments
     
+    # 获取讨论数据
+    from crud import get_all_discussions
+    discussions = get_all_discussions(db)
+    
     current_user = await get_current_user(request, db)
     return templates.TemplateResponse(
         "story_detail.html",
@@ -43,6 +47,7 @@ async def read_story(request: Request, story_id: int, db: Session = Depends(get_
             "story_author_name": story_author_name,
             "chapters": chapters,
             "chapter_comments": chapter_comments,
+            "discussions": discussions,
             "current_user": current_user
         }
     )

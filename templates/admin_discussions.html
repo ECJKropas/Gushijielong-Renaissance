@@ -15,11 +15,25 @@
         </div>
         <div class="stat-card">
             <h4>总评论数</h4>
-            <div class="stat-number">{{ discussions|sum(attribute='comments')|length }}</div>
+            <div class="stat-number">
+                {% set total_comments = 0 %}
+                {% for discussion in discussions %}
+                    {% set total_comments = total_comments + discussion.comments|length %}
+                {% endfor %}
+                {{ total_comments }}
+            </div>
         </div>
         <div class="stat-card">
             <h4>活跃讨论数</h4>
-            <div class="stat-number">{{ discussions|selectattr('comments')|list|length }}</div>
+            <div class="stat-number">
+                {% set active_discussions = 0 %}
+                {% for discussion in discussions %}
+                    {% if discussion.comments|length > 0 %}
+                        {% set active_discussions = active_discussions + 1 %}
+                    {% endif %}
+                {% endfor %}
+                {{ active_discussions }}
+            </div>
         </div>
     </div>
     

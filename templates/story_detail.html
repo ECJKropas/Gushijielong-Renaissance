@@ -96,7 +96,7 @@
                 <div class="add-discussion">
                     <h4>创建讨论主题</h4>
                     {% if current_user %}
-                        <form action="/discussion" method="post">
+                        <form action="/create-discussion" method="post">
                             <div>
                                 <label for="discussion-title">标题:</label>
                                 <input type="text" id="discussion-title" name="title" required>

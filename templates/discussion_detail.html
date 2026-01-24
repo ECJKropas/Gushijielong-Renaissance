@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+
+{% block title %}{{ discussion.title }} - 讨论区 - 故事接龙网站{% endblock %}
+
+{% block content %}
+    <section class="discussion-detail-page">
+        <h2>{{ discussion.title }}</h2>
+        
+        <div class="discussion-content">
+            <p>{{ discussion.content }}</p>
+            <small>作者: {{ discussion.author_name }} | 创建于: {{ discussion.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+        </div>
+        
+        <!-- 讨论评论 -->
+        <div class="discussion-comments">
+            <h3>评论 ({{ comments|length }})</h3>
+            
+            {% if comments %}
+                <ul>
+                    {% for comment in comments %}
+                        <li>
+                            <strong>{{ comment.author_name }}:</strong> {{ comment.content }}
+                            <small>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p>暂无评论</p>
+            {% endif %}
+            
+            <!-- 添加评论表单 -->
+            {% if current_user %}
+                <form action="/discussions/{{ discussion.id }}/comment" method="post">
+                    <div>
+                        <label for="comment-content">评论内容:</label>
+                        <textarea id="comment-content" name="content" rows="2" required></textarea>
+                    </div>
+                    <button type="submit">发表评论</button>
+                </form>
+            {% else %}
+                <p class="login-prompt">请先<a href="/login">登录</a>后发表评论</p>
+            {% endif %}
+        </div>
+        
+        <div class="back-link">
+            <a href="/discussions" class="btn-back">← 返回讨论区</a>
+        </div>
+    </section>
+{% endblock %}

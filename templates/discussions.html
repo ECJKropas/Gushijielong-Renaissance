@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+
+{% block title %}讨论区 - 故事接龙网站{% endblock %}
+
+{% block content %}
+    <section class="discussion-page">
+        <h2>讨论区</h2>
+        
+        <!-- 创建讨论主题表单 -->
+        <div class="create-discussion">
+            <h3>创建新讨论</h3>
+            {% if current_user %}
+                <form action="/create-discussion" method="post">
+                    <div>
+                        <label for="title">讨论标题:</label>
+                        <input type="text" id="title" name="title" required>
+                    </div>
+                    <div>
+                        <label for="content">讨论内容:</label>
+                        <textarea id="content" name="content" rows="4" required></textarea>
+                    </div>
+                    <button type="submit">创建讨论</button>
+                </form>
+            {% else %}
+                <p class="login-prompt">请先<a href="/login">登录</a>后创建讨论</p>
+            {% endif %}
+        </div>
+        
+        <!-- 讨论主题列表 -->
+        <div class="discussion-list">
+            {% if discussions %}
+                {% for discussion in discussions %}
+                    <div class="discussion-item">
+                        <h3>{{ discussion.title }}</h3>
+                        <p>{{ discussion.content }}</p>
+                        <small>作者: {{ discussion.author_name }} | {{ discussion.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                        
+                        <!-- 讨论评论 -->
+                        <div class="discussion-comments">
+                            <h4>评论</h4>
+                            {% if discussion_comments.get(discussion.id) %}
+                                <ul>
+                                    {% for comment in discussion_comments[discussion.id] %}
+                                        <li>
+                                            <strong>{{ comment.author_name }}:</strong> {{ comment.content }}
+                                            <small>{{ comment.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>暂无评论</p>
+                            {% endif %}
+                            
+                            <!-- 添加评论表单 -->
+                            {% if current_user %}
+                                <form action="/discussions/{{ discussion.id }}/comment" method="post">
+                                    <div>
+                                        <label for="comment-content-{{ discussion.id }}">评论内容:</label>
+                                        <textarea id="comment-content-{{ discussion.id }}" name="content" rows="2" required></textarea>
+                                    </div>
+                                    <button type="submit">发表评论</button>
+                                </form>
+                            {% else %}
+                                <p class="login-prompt">请先<a href="/login">登录</a>后发表评论</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>还没有讨论主题，快来创建第一个讨论吧！</p>
+            {% endif %}
+        </div>
+    </section>
+{% endblock %}

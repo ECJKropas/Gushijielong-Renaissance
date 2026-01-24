@@ -18,12 +18,18 @@ router = APIRouter()
 
 async def list_discussions(request: Request, db: Session = Depends(get_db)):
     discussions = get_all_discussions(db)
+    # 获取所有讨论的评论
+    discussion_comments = {}
+    for discussion in discussions:
+        comments = get_comments_by_discussion(db, discussion.id)
+        discussion_comments[discussion.id] = comments
     current_user = await get_current_user(request, db)
     return templates.TemplateResponse(
         "discussions.html",
         {
             "request": request,
             "discussions": discussions,
+            "discussion_comments": discussion_comments,
             "current_user": current_user
         }
     )
