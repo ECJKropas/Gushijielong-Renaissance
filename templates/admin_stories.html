@@ -15,11 +15,25 @@
         </div>
         <div class="stat-card">
             <h4>总章节数</h4>
-            <div class="stat-number">{{ stories|sum(attribute='chapters')|length }}</div>
+            <div class="stat-number">
+                {% set total_chapters = 0 %}
+                {% for story in stories %}
+                    {% set total_chapters = total_chapters + story.chapters|length %}
+                {% endfor %}
+                {{ total_chapters }}
+            </div>
         </div>
         <div class="stat-card">
             <h4>总评论数</h4>
-            <div class="stat-number">{{ stories|sum(attribute='comments')|length }}</div>
+            <div class="stat-number">
+                {% set total_comments = 0 %}
+                {% for story in stories %}
+                    {% for chapter in story.chapters %}
+                        {% set total_comments = total_comments + chapter.comments|length %}
+                    {% endfor %}
+                {% endfor %}
+                {{ total_comments }}
+            </div>
         </div>
     </div>
     
