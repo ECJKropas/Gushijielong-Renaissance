@@ -3,33 +3,28 @@
 {% block title %}首页 - 故事接龙网站{% endblock %}
 
 {% block content %}
-    <section class="create-story">
-        <h2>创建新故事</h2>
-        
+    <section class="create-story-link">
+        <h2>所有故事</h2>
         {% if current_user %}
-            <form action="/create-story" method="post">
-                <div>
-                    <label for="title">故事标题:</label>
-                    <input type="text" id="title" name="title" required>
-                </div>
-                <div>
-                    <label for="content">故事开头:</label>
-                    <textarea id="content" name="content" rows="5" required></textarea>
-                </div>
-                <button type="submit">创建故事</button>
-            </form>
+            <p><a href="/create-story" class="create-story-btn">创建新故事</a></p>
         {% else %}
-            <p class="login-prompt">请先<a href="/login">登录</a>或<a href="/register">注册</a>后创建故事</p>
+            <p>请先<a href="/login">登录</a>或<a href="/register">注册</a>后创建故事</p>
         {% endif %}
     </section>
     
     <section class="story-list">
-        <h2>所有故事</h2>
         {% if stories %}
             <ul>
                 {% for story in stories %}
                     <li>
                         <h3><a href="/stories/{{ story.id }}">{{ story.title }}</a></h3>
+                        {% if story.tags %}
+                            <div class="story-tags">
+                                {% for tag in story.tags %}
+                                    <span class="tag">{{ tag }}</span>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
                         <div class="story-excerpt">{{ story.content_html|safe }}</div>
                         <small>作者: {{ story.author_name }} | 创建于: {{ story.created_at.strftime('%Y-%m-%d %H:%M') }}</small>
                     </li>

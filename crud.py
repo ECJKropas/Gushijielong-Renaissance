@@ -69,9 +69,9 @@ def delete_user(db: Session, user_id: int):
 # 故事相关操作
 
 
-def create_story(db: Session, title: str, content: str, author_id: int):
+def create_story(db: Session, title: str, content: str, author_id: int, tags: str = ""):
     """创建新故事"""
-    db_story = StoryDB(title=title, content=content, author_id=author_id)
+    db_story = StoryDB(title=title, content=content, author_id=author_id, tags=tags)
     db.add(db_story)
     db.commit()
     db.refresh(db_story)
@@ -274,5 +274,3 @@ def get_statistics(db: Session):
         "recent_discussions": db.query(DiscussionDB).order_by(desc(DiscussionDB.created_at)).limit(5).all()
     }
     return stats
-
-

@@ -8,6 +8,29 @@ from models import get_current_user
 from sqlalchemy.orm import Session
 from templates_config import templates
 import markdown
+
+def generate_story_excerpt(content):
+    """生成故事摘要"""
+    # 分割为段落
+    paragraphs = content.split('\n\n')
+    if not paragraphs:
+        return ''
+    
+    # 取第一段
+    first_paragraph = paragraphs[0]
+    
+    # 按行分割
+    lines = first_paragraph.split('\n')
+    
+    # 如果超过5行，只取前5行
+    if len(lines) > 5:
+        excerpt = '\n'.join(lines[:5]) + '...'
+    else:
+        excerpt = first_paragraph + '...'
+    
+    # 转换为HTML
+    return markdown.markdown(excerpt)
+
 # 导入路由
 from routers import stories, comments, discussions, auth, admin
 # 创建FastAPI应用
@@ -42,8 +65,10 @@ async def read_root(request: Request, db: Session = Depends(get_db)):
     for story in stories:
         author = get_user_by_id(db, story.author_id)
         story.author_name = author.username if author else "未知作者"
-        # 渲染故事内容为HTML用于显示
-        story.content_html = markdown.markdown(story.content)
+        # 渲染故事摘要为HTML用于显示
+        story.content_html = generate_story_excerpt(story.content)
+        # 处理标签
+        story.tags = [tag.strip() for tag in story.tags.split(',') if tag.strip()]
         story_with_authors.append(story)
     
     return templates.TemplateResponse(
@@ -68,5 +93,3 @@ async def read_about(request: Request, db: Session = Depends(get_db)):
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="127.0.0.1", port=8000)
-
-

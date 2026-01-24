@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+
+{% block title %}创建新故事 - 故事接龙网站{% endblock %}
+
+{% block content %}
+    <section class="create-story-page">
+        <h2>创建新故事</h2>
+        
+        {% if current_user %}
+            <form action="/create-story" method="post">
+                <div>
+                    <label for="title">故事标题:</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+                <div>
+                    <label for="tags">故事标签:</label>
+                    <div class="tag-input-container">
+                        <div id="tags-container"></div>
+                        <input type="text" id="tag-input" placeholder="输入标签，按回车添加">
+                        <input type="hidden" id="tags" name="tags" value="">
+                    </div>
+                </div>
+                <div>
+                    <label for="content">故事开头:</label>
+                    <textarea id="content" name="content" rows="10" required></textarea>
+                </div>
+                <button type="submit">创建故事</button>
+            </form>
+        {% else %}
+            <p class="login-prompt">请先<a href="/login">登录</a>或<a href="/register">注册</a>后创建故事</p>
+        {% endif %}
+    </section>
+
+    <script>
+        // 标签功能实现
+        const tagInput = document.getElementById('tag-input');
+        const tagsContainer = document.getElementById('tags-container');
+        const tagsHiddenInput = document.getElementById('tags');
+        const tags = new Set();
+
+        // 渲染标签
+        function renderTags() {
+            tagsContainer.innerHTML = '';
+            tags.forEach(tag => {
+                const tagElement = document.createElement('span');
+                tagElement.className = 'tag';
+                tagElement.textContent = tag;
+                
+                // 添加删除按钮
+                const deleteBtn = document.createElement('button');
+                deleteBtn.type = 'button';
+                deleteBtn.className = 'tag-delete';
+                deleteBtn.textContent = '×';
+                deleteBtn.onclick = () => {
+                    tags.delete(tag);
+                    renderTags();
+                };
+                
+                tagElement.appendChild(deleteBtn);
+                tagsContainer.appendChild(tagElement);
+            });
+            
+            // 更新隐藏输入框的值
+            tagsHiddenInput.value = Array.from(tags).join(',');
+        }
+
+        // 处理标签输入
+        tagInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const tagValue = tagInput.value.trim();
+                if (tagValue && !tags.has(tagValue)) {
+                    tags.add(tagValue);
+                    tagInput.value = '';
+                    renderTags();
+                }
+            }
+        });
+    </script>
+{% endblock %}

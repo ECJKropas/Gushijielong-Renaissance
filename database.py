@@ -40,6 +40,7 @@ class StoryDB(Base):
     title = Column(String(200), nullable=False)
     content = Column(Text, nullable=False)
     author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    tags = Column(String(200), default="")
     created_at = Column(DateTime, default=datetime.now)
     updated_at = Column(DateTime, default=datetime.now)
     # 关系
@@ -105,6 +106,7 @@ class DiscussionCommentDB(Base):
 # 数据库操作函数
 
 
+
 def get_db():
     db = SessionLocal()
     try:
@@ -113,10 +115,12 @@ def get_db():
         db.close()
 
 
+
 def init_db():
     """初始化数据库，创建所有表"""
     Base.metadata.create_all(bind=engine)
     print("数据库初始化完成")
+
 
 
 def migrate_data_from_memory(data_store):
@@ -144,6 +148,7 @@ def migrate_data_from_memory(data_store):
                 title=story_data.title,
                 content=story_data.content,
                 author_id=story_data.author_id,
+                tags="",
                 created_at=story_data.created_at,
                 updated_at=story_data.updated_at
             )
@@ -201,5 +206,3 @@ def migrate_data_from_memory(data_store):
         return False
     finally:
         db.close()
-
-

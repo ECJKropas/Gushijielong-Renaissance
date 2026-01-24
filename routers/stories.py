@@ -32,6 +32,9 @@ async def read_story(request: Request, story_id: int, db: Session = Depends(get_
     # 渲染故事内容为HTML
     story.content_html = markdown.markdown(story.content)
     
+    # 处理标签
+    story.tags = [tag.strip() for tag in story.tags.split(',') if tag.strip()]
+    
     chapters = get_chapters_by_story(db, story_id)
     chapter_comments = {}
     for chapter in chapters:
@@ -135,6 +138,7 @@ async def create_new_story(
     request: Request,
     title: str = Form(...),
     content: str = Form(...),
+    tags: str = Form(""),
     db: Session = Depends(get_db)
 ):
     current_user = await get_current_user(request, db)
@@ -145,10 +149,9 @@ async def create_new_story(
         db=db,
         title=title,
         content=content,
-        author_id=current_user.id
+        author_id=current_user.id,
+        tags=tags
     )
     # 更新用户活跃次数
     update_user_active_count(db, current_user.id)
     return RedirectResponse(url=f"/stories/{story.id}", status_code=303)
-
-
