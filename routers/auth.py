@@ -49,9 +49,9 @@ async def register(
 
 async def login_form(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
+
+
 @router.post("/login")
-
-
 async def login(
     request: Request,
     username: str = Form(...),
@@ -61,20 +61,20 @@ async def login(
     # 查找用户
     user = get_user_by_username(db, username)
     # 验证密码
-    if not user or not bcrypt.checkpw(password.encode("utf-8"), user.password_hash.encode("utf-8")):
+    if not user or not bcrypt.checkpw(password.encode("utf-8"), user["password_hash"].encode("utf-8")):
         return templates.TemplateResponse(
             "login.html",
             {"request": request, "error": "用户名或密码错误"}
         )
     # 更新用户活跃次数
-    update_user_active_count(db, user.id)
+    update_user_active_count(db, user["id"])
     # 设置登录cookie
     response = RedirectResponse(url="/", status_code=303)
-    response.set_cookie(key="user_id", value=str(user.id), httponly=True, max_age=86400)  # 24小时
+    response.set_cookie(key="user_id", value=str(user["id"]), httponly=True, max_age=86400)  # 24小时
     return response
+
+
 @router.get("/logout")
-
-
 async def logout():
     response = RedirectResponse(url="/", status_code=303)
     response.delete_cookie("user_id")

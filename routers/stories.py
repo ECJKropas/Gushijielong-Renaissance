@@ -26,26 +26,29 @@ async def read_story(request: Request, story_id: int, db: Session = Depends(get_
     
     # 获取故事作者
     from crud import get_user_by_id
-    story_author = get_user_by_id(db, story.author_id)
-    story_author_name = story_author.username if story_author else "未知作者"
+    story_author = get_user_by_id(db, story["author_id"])
+    story_author_name = story_author["username"] if story_author else "未知作者"
     
     # 渲染故事内容为HTML
-    story.content_html = markdown.markdown(story.content)
+    story["content_html"] = markdown.markdown(story["content"])
     
     # 处理标签
-    story.tags = [tag.strip() for tag in story.tags.split(',') if tag.strip()]
+    if isinstance(story["tags"], str):
+        story["tags"] = [tag.strip() for tag in story["tags"].split(',') if tag.strip()]
+    elif not story["tags"]:
+        story["tags"] = []
     
     chapters = get_chapters_by_story(db, story_id)
     chapter_comments = {}
     for chapter in chapters:
         # 渲染章节内容为HTML
-        chapter.content_html = markdown.markdown(chapter.content)
+        chapter["content_html"] = markdown.markdown(chapter["content"])
         # 获取章节评论
-        comments = get_comments_by_chapter(db, chapter.id)
+        comments = get_comments_by_chapter(db, chapter["id"])
         # 渲染评论内容为HTML
         for comment in comments:
-            comment.content_html = markdown.markdown(comment.content)
-        chapter_comments[chapter.id] = comments
+            comment["content_html"] = markdown.markdown(comment["content"])
+        chapter_comments[chapter["id"]] = comments
     
     # 获取讨论数据
     from crud import get_all_discussions
@@ -84,11 +87,11 @@ async def continue_story(
         db=db,
         story_id=story_id,
         content=content,
-        author_id=current_user.id,
-        author_name=current_user.username
+        author_id=current_user["id"],
+        author_name=current_user["username"]
     )
     # 更新用户活跃次数
-    update_user_active_count(db, current_user.id)
+    update_user_active_count(db, current_user["id"])
     return RedirectResponse(url=f"/stories/{story_id}", status_code=303)
 @router.post("/stories/{story_id}/chapters/{chapter_id}/comment")
 
@@ -108,11 +111,11 @@ async def add_chapter_comment(
         db=db,
         chapter_id=chapter_id,
         content=content,
-        author_id=current_user.id,
-        author_name=current_user.username
+        author_id=current_user["id"],
+        author_name=current_user["username"]
     )
     # 更新用户活跃次数
-    update_user_active_count(db, current_user.id)
+    update_user_active_count(db, current_user["id"])
     return RedirectResponse(url=f"/stories/{story_id}#{chapter_id}", status_code=303)
 @router.get("/stories", response_class=HTMLResponse)
 
@@ -149,9 +152,9 @@ async def create_new_story(
         db=db,
         title=title,
         content=content,
-        author_id=current_user.id,
+        author_id=current_user["id"],
         tags=tags
     )
     # 更新用户活跃次数
-    update_user_active_count(db, current_user.id)
-    return RedirectResponse(url=f"/stories/{story.id}", status_code=303)
+    update_user_active_count(db, current_user["id"])
+    return RedirectResponse(url=f"/stories/{story['id']}", status_code=303)

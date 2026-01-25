@@ -23,12 +23,12 @@ async def list_discussions(request: Request, db: Session = Depends(get_db)):
     discussion_comments = {}
     for discussion in discussions:
         # 渲染讨论内容为HTML
-        discussion.content_html = markdown.markdown(discussion.content)
-        comments = get_comments_by_discussion(db, discussion.id)
+        discussion["content_html"] = markdown.markdown(discussion["content"])
+        comments = get_comments_by_discussion(db, discussion["id"])
         # 渲染评论内容为HTML
         for comment in comments:
-            comment.content_html = markdown.markdown(comment.content)
-        discussion_comments[discussion.id] = comments
+            comment["content_html"] = markdown.markdown(comment["content"])
+        discussion_comments[discussion["id"]] = comments
     current_user = await get_current_user(request, db)
     return templates.TemplateResponse(
         "discussions.html",
@@ -47,11 +47,11 @@ async def read_discussion(request: Request, discussion_id: int, db: Session = De
     if not discussion:
         return RedirectResponse(url="/discussions", status_code=303)
     # 渲染讨论内容为HTML
-    discussion.content_html = markdown.markdown(discussion.content)
+    discussion["content_html"] = markdown.markdown(discussion["content"])
     comments = get_comments_by_discussion(db, discussion_id)
     # 渲染评论内容为HTML
     for comment in comments:
-        comment.content_html = markdown.markdown(comment.content)
+        comment["content_html"] = markdown.markdown(comment["content"])
     current_user = await get_current_user(request, db)
     return templates.TemplateResponse(
         "discussion_detail.html",
@@ -116,11 +116,11 @@ async def add_discussion_comment(
         db=db,
         discussion_id=discussion_id,
         content=content,
-        author_id=current_user.id,
-        author_name=current_user.username
+        author_id=current_user["id"],
+        author_name=current_user["username"]
     )
     # 更新用户活跃次数
-    update_user_active_count(db, current_user.id)
+    update_user_active_count(db, current_user["id"])
     return RedirectResponse(url=f"/discussions/{discussion_id}", status_code=303)
 
 

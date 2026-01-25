@@ -20,7 +20,11 @@ def get_current_user_id(request: Request):
 async def get_current_user(request: Request, db: Session = Depends(get_db)):
     user_id = get_current_user_id(request)
     if user_id:
-        return get_user_by_id(db, user_id)
+        # 从本地缓存获取用户对象
+        user = get_user_by_id(db, user_id)
+        if user:
+            # 直接返回用户对象，避免会话绑定问题
+            return user
     return None
 
 

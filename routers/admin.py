@@ -19,7 +19,7 @@ router = APIRouter()
 
 async def require_admin(request: Request, db: Session = Depends(get_db)):
     current_user = await get_current_user(request, db)
-    if not current_user or current_user.role != "admin":
+    if not current_user or current_user["role"] != "admin":
         return None  # 返回None而不是抛出异常，让路由函数处理重定向
     return current_user
 @router.get("/admin", response_class=HTMLResponse)
@@ -28,7 +28,7 @@ async def require_admin(request: Request, db: Session = Depends(get_db)):
 async def admin_dashboard(
     request: Request,
     db: Session = Depends(get_db),
-    current_user: UserDB = Depends(require_admin)
+    current_user: dict = Depends(require_admin)
 ):
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
@@ -104,17 +104,18 @@ async def admin_discussions(
 async def delete_user(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: UserDB = Depends(require_admin)
+    current_user: dict = Depends(require_admin)
 ):
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
     # 不允许删除自己
-    if user_id == current_user.id:
+    if user_id == current_user["id"]:
         return RedirectResponse(url="/admin/users", status_code=303)
-    user = db.query(UserDB).filter(UserDB.id == user_id).first()
-    if user:
-        db.delete(user)
-        db.commit()
+    
+    # 使用本地缓存删除用户
+    from crud import delete_user
+    delete_user(db, user_id)
+    
     return RedirectResponse(url="/admin/users", status_code=303)
 @router.post("/admin/delete/story/{story_id}")
 
@@ -122,26 +123,15 @@ async def delete_user(
 async def delete_story(
     story_id: int,
     db: Session = Depends(get_db),
-    current_user: UserDB = Depends(require_admin)
+    current_user: dict = Depends(require_admin)
 ):
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
-    story = db.query(StoryDB).filter(StoryDB.id == story_id).first()
-    if story:
-        # 先获取所有相关章节的ID
-        chapter_ids = db.query(StoryChapterDB.id).filter(StoryChapterDB.story_id == story_id).all()
-        chapter_ids = [chapter.id for chapter in chapter_ids]
-        
-        # 删除相关评论
-        if chapter_ids:
-            db.query(ChapterCommentDB).filter(ChapterCommentDB.chapter_id.in_(chapter_ids)).delete(synchronize_session=False)
-        
-        # 删除相关章节
-        db.query(StoryChapterDB).filter(StoryChapterDB.story_id == story_id).delete()
-        
-        # 删除故事
-        db.delete(story)
-        db.commit()
+    
+    # 使用本地缓存删除故事
+    from crud import delete_story
+    delete_story(db, story_id)
+    
     return RedirectResponse(url="/admin/stories", status_code=303)
 @router.post("/admin/delete/discussion/{discussion_id}")
 
@@ -149,16 +139,15 @@ async def delete_story(
 async def delete_discussion(
     discussion_id: int,
     db: Session = Depends(get_db),
-    current_user: UserDB = Depends(require_admin)
+    current_user: dict = Depends(require_admin)
 ):
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
-    discussion = db.query(DiscussionDB).filter(DiscussionDB.id == discussion_id).first()
-    if discussion:
-        # 删除相关的评论
-        db.query(DiscussionCommentDB).filter(DiscussionCommentDB.discussion_id == discussion_id).delete()
-        db.delete(discussion)
-        db.commit()
+    
+    # 使用本地缓存删除讨论
+    from crud import delete_discussion
+    delete_discussion(db, discussion_id)
+    
     return RedirectResponse(url="/admin/discussions", status_code=303)
 @router.post("/admin/make_admin/{user_id}")
 
@@ -166,14 +155,18 @@ async def delete_discussion(
 async def make_admin(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: UserDB = Depends(require_admin)
+    current_user: dict = Depends(require_admin)
 ):
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
-    user = db.query(UserDB).filter(UserDB.id == user_id).first()
+    
+    # 使用本地缓存更新用户角色
+    from local_cache import local_cache
+    user = local_cache.get("users", user_id)
     if user:
-        user.role = "admin"
-        db.commit()
+        user["role"] = "admin"
+        local_cache.update("users", user)
+    
     return RedirectResponse(url="/admin/users", status_code=303)
 @router.post("/admin/remove_admin/{user_id}")
 
@@ -181,17 +174,21 @@ async def make_admin(
 async def remove_admin(
     user_id: int,
     db: Session = Depends(get_db),
-    current_user: UserDB = Depends(require_admin)
+    current_user: dict = Depends(require_admin)
 ):
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
     # 不允许移除自己的管理员权限
-    if user_id == current_user.id:
+    if user_id == current_user["id"]:
         return RedirectResponse(url="/admin/users", status_code=303)
-    user = db.query(UserDB).filter(UserDB.id == user_id).first()
+    
+    # 使用本地缓存更新用户角色
+    from local_cache import local_cache
+    user = local_cache.get("users", user_id)
     if user:
-        user.role = "user"
-        db.commit()
+        user["role"] = "user"
+        local_cache.update("users", user)
+    
     return RedirectResponse(url="/admin/users", status_code=303)
 
 

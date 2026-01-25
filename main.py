@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
 from database import init_db, get_db
-from crud import get_all_stories, get_all_discussions
+from crud import get_all_stories, get_all_discussions, get_user_by_id
 from models import get_current_user
 from sqlalchemy.orm import Session
 from templates_config import templates
@@ -103,13 +103,18 @@ async def read_root(request: Request, db: Session = Depends(get_db)):
     story_with_authors = []
     for story in stories:
         # 从本地缓存获取作者
-        author = get_user_by_id(db, story.author_id)
-        story.author_name = author.username if author else "未知作者"
+        author = get_user_by_id(db, story["author_id"])
+        # 创建一个新的字典，添加作者名称
+        story_dict = story.copy()
+        story_dict["author_name"] = author["username"] if author else "未知作者"
         # 渲染故事摘要为HTML用于显示
-        story.content_html = generate_story_excerpt(story.content)
+        story_dict["content_html"] = generate_story_excerpt(story["content"])
         # 处理标签
-        story.tags = [tag.strip() for tag in story.tags.split(',') if tag.strip()]
-        story_with_authors.append(story)
+        if isinstance(story["tags"], str):
+            story_dict["tags"] = [tag.strip() for tag in story["tags"].split(',') if tag.strip()]
+        elif not story["tags"]:
+            story_dict["tags"] = []
+        story_with_authors.append(story_dict)
     
     return templates.TemplateResponse(
         "index.html",

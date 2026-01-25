@@ -72,32 +72,78 @@ class LocalCache:
             # 加载用户
             users = db.query(UserDB).all()
             for user in users:
-                self.data["users"][user.id] = user
+                self.data["users"][user.id] = {
+                    "id": user.id,
+                    "username": user.username,
+                    "email": user.email,
+                    "password_hash": user.password_hash,
+                    "role": user.role,
+                    "registered_at": user.registered_at,
+                    "active_count": user.active_count,
+                    "points": user.points,
+                    "credit": user.credit
+                }
             
             # 加载故事
             stories = db.query(StoryDB).all()
             for story in stories:
-                self.data["stories"][story.id] = story
+                self.data["stories"][story.id] = {
+                    "id": story.id,
+                    "title": story.title,
+                    "content": story.content,
+                    "author_id": story.author_id,
+                    "tags": story.tags,
+                    "created_at": story.created_at,
+                    "updated_at": story.updated_at
+                }
             
             # 加载章节
             chapters = db.query(StoryChapterDB).all()
             for chapter in chapters:
-                self.data["story_chapters"][chapter.id] = chapter
+                self.data["story_chapters"][chapter.id] = {
+                    "id": chapter.id,
+                    "story_id": chapter.story_id,
+                    "content": chapter.content,
+                    "author_id": chapter.author_id,
+                    "author_name": chapter.author_name,
+                    "created_at": chapter.created_at
+                }
             
             # 加载章节评论
             chapter_comments = db.query(ChapterCommentDB).all()
             for comment in chapter_comments:
-                self.data["chapter_comments"][comment.id] = comment
+                self.data["chapter_comments"][comment.id] = {
+                    "id": comment.id,
+                    "chapter_id": comment.chapter_id,
+                    "content": comment.content,
+                    "author_id": comment.author_id,
+                    "author_name": comment.author_name,
+                    "created_at": comment.created_at
+                }
             
             # 加载讨论
             discussions = db.query(DiscussionDB).all()
             for discussion in discussions:
-                self.data["discussions"][discussion.id] = discussion
+                self.data["discussions"][discussion.id] = {
+                    "id": discussion.id,
+                    "title": discussion.title,
+                    "content": discussion.content,
+                    "author_id": discussion.author_id,
+                    "author_name": discussion.author_name,
+                    "created_at": discussion.created_at
+                }
             
             # 加载讨论评论
             discussion_comments = db.query(DiscussionCommentDB).all()
             for comment in discussion_comments:
-                self.data["discussion_comments"][comment.id] = comment
+                self.data["discussion_comments"][comment.id] = {
+                    "id": comment.id,
+                    "discussion_id": comment.discussion_id,
+                    "content": comment.content,
+                    "author_id": comment.author_id,
+                    "author_name": comment.author_name,
+                    "created_at": comment.created_at
+                }
             
             self.last_sync_time = datetime.now()
             print("数据已从数据库加载到本地缓存")
@@ -115,7 +161,11 @@ class LocalCache:
     def add(self, table_name, item):
         """添加数据到本地缓存"""
         with self.lock:
-            item_id = getattr(item, "id", None)
+            # 支持字典和对象两种类型
+            if isinstance(item, dict):
+                item_id = item.get("id")
+            else:
+                item_id = getattr(item, "id", None)
             if item_id:
                 self.data[table_name][item_id] = item
                 self.modified[table_name].add(item_id)
@@ -128,7 +178,11 @@ class LocalCache:
     def update(self, table_name, item):
         """更新本地缓存中的数据"""
         with self.lock:
-            item_id = getattr(item, "id", None)
+            # 支持字典和对象两种类型
+            if isinstance(item, dict):
+                item_id = item.get("id")
+            else:
+                item_id = getattr(item, "id", None)
             if item_id and item_id in self.data[table_name]:
                 self.data[table_name][item_id] = item
                 self.modified[table_name].add(item_id)
@@ -172,8 +226,45 @@ class LocalCache:
         finally:
             db.close()
     
-    def _sync_table(self, db: Session, table_name):
-        """同步单个表的数据"""
+    def sync_to_db(self):
+        """将本地修改同步到数据库"""
+        db = SessionLocal()
+        try:
+            with self.lock:
+                # 同步删除操作，按照正确的顺序处理外键约束
+                # 1. 先删除所有评论
+                for table_name in ["chapter_comments", "discussion_comments"]:
+                    self._sync_deletes(db, table_name)
+                
+                # 2. 再删除所有章节
+                self._sync_deletes(db, "story_chapters")
+                
+                # 3. 最后删除所有主表数据
+                for table_name in ["stories", "discussions"]:
+                    self._sync_deletes(db, table_name)
+                
+                # 4. 删除用户数据
+                self._sync_deletes(db, "users")
+                
+                # 同步修改操作
+                for table_name in self.data.keys():
+                    self._sync_modifies(db, table_name)
+                
+                # 提交事务，这是关键！
+                db.commit()
+                
+                self.last_sync_time = datetime.now()
+                print(f"数据已同步到数据库，时间: {self.last_sync_time}")
+                return True
+        except Exception as e:
+            db.rollback()
+            print(f"数据同步失败: {e}")
+            return False
+        finally:
+            db.close()
+    
+    def _sync_deletes(self, db: Session, table_name):
+        """同步删除操作"""
         model_class = self._get_class_by_table(table_name)
         if not model_class:
             return
@@ -187,6 +278,12 @@ class LocalCache:
                 print(f"删除 {table_name} {item_id} 失败: {e}")
         # 清空删除标记
         self.deleted[table_name].clear()
+    
+    def _sync_modifies(self, db: Session, table_name):
+        """同步修改操作"""
+        model_class = self._get_class_by_table(table_name)
+        if not model_class:
+            return
         
         # 处理修改的数据
         for item_id in self.modified[table_name]:
@@ -199,11 +296,15 @@ class LocalCache:
                         # 更新现有数据
                         for column in model_class.__table__.columns:
                             if column.name != "id":
-                                setattr(db_item, column.name, getattr(item, column.name))
+                                setattr(db_item, column.name, item.get(column.name))
                         db.merge(db_item)
                     else:
                         # 添加新数据
-                        db.add(item)
+                        # 创建模型实例
+                        new_item = model_class()
+                        for column in model_class.__table__.columns:
+                            setattr(new_item, column.name, item.get(column.name))
+                        db.add(new_item)
             except Exception as e:
                 print(f"同步 {table_name} {item_id} 失败: {e}")
         # 清空修改标记
