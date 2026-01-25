@@ -31,6 +31,7 @@ engine = create_engine(
         'connect_timeout': 10,
         'read_timeout': 30,
         'write_timeout': 30,
+        'ssl_ca': None,  # 使用系统CA证书启用SSL连接
     }  # 连接参数优化
 )
 # 创建会话工厂

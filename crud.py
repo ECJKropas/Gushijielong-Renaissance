@@ -9,6 +9,7 @@ from database import (
     DiscussionCommentDB
 )
 from local_cache import local_cache
+import datetime
 # 用户相关操作
 
 
@@ -19,13 +20,17 @@ def create_user(db: Session, username: str, email: str, password_hash: str):
     users = local_cache.get_all("users")
     max_id = max([user["id"] for user in users]) if users else 0
     
-    # 创建新用户字典
+    # 创建新用户字典，包含所有必要字段
     new_user = {
         "id": max_id + 1,
         "username": username,
         "email": email,
         "password_hash": password_hash,
-        "registered_at": datetime.now()
+        "role": "user",  # 默认普通用户
+        "registered_at": datetime.now(),
+        "active_count": 0,  # 活跃次数初始化为0
+        "points": 0,  # 积分初始化为0
+        "credit": 100.0  # 信用分初始化为100
     }
     
     # 添加到本地缓存
@@ -66,20 +71,21 @@ def update_user_points(db: Session, user_id: int, points: int):
     """更新用户积分"""
     user = local_cache.get("users", user_id)
     if user:
-        # 确保points不为None
-        if user["points"] is None:
+        # 确保points不为None，安全访问
+        if user.get("points") is None:
             user["points"] = 0
         user["points"] += points
         local_cache.update("users", user)
     return user
 
 
+
 def update_user_active_count(db: Session, user_id: int):
     """更新用户活跃次数"""
     user = local_cache.get("users", user_id)
     if user:
-        # 确保active_count不为None
-        if user["active_count"] is None:
+        # 确保active_count不为None，安全访问
+        if user.get("active_count") is None:
             user["active_count"] = 0
         user["active_count"] += 1
         local_cache.update("users", user)
@@ -387,13 +393,13 @@ def get_statistics(db: Session):
     total_discussions = len(discussions)
     total_chapter_comments = len(chapter_comments)
     total_discussion_comments = len(discussion_comments)
-    # 确保只处理active_count不为None的情况
-    active_users = len([user for user in users if user["active_count"] is not None and user["active_count"] > 0])
+    # 确保只处理active_count不为None的情况，安全访问active_count字段
+    active_users = len([user for user in users if user.get("active_count") is not None and user.get("active_count") > 0])
     
-    # 获取最近的用户、故事和讨论
-    recent_users = sorted(users, key=lambda x: x["registered_at"], reverse=True)[:5]
-    recent_stories = sorted(stories, key=lambda x: x["created_at"], reverse=True)[:5]
-    recent_discussions = sorted(discussions, key=lambda x: x["created_at"], reverse=True)[:5]
+    # 获取最近的用户、故事和讨论，使用安全的字段访问方式
+    recent_users = sorted(users, key=lambda x: x.get("registered_at", datetime.datetime.min), reverse=True)[:5]
+    recent_stories = sorted(stories, key=lambda x: x.get("created_at", datetime.datetime.min), reverse=True)[:5]
+    recent_discussions = sorted(discussions, key=lambda x: x.get("created_at", datetime.datetime.min), reverse=True)[:5]
     
     stats = {
         "total_users": total_users,
