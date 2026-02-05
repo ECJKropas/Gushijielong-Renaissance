@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request, Depends
+from fastapi import FastAPI, Request, Depends, HTTPException
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
@@ -11,8 +11,14 @@ import markdown
 import threading
 import time
 import atexit
-from local_cache import local_cache
-from database import SessionLocal
+import logging
+from enhanced_local_cache import enhanced_local_cache
+from database_connection import db_manager, get_db_session
+from datetime import datetime, timedelta
+
+# 配置日志
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def generate_story_excerpt(content):
     """生成故事摘要"""
@@ -36,31 +42,64 @@ def generate_story_excerpt(content):
     # 转换为HTML
     return markdown.markdown(excerpt)
 
-# 定时同步函数
+# 定时同步函数 - 增强版本
 def sync_to_db_periodically():
-    """每分钟同步一次数据到数据库"""
+    """每分钟同步一次数据到数据库，支持重连和回退"""
+    retry_count = 0
+    max_retries = 3
+    
     while True:
-        local_cache.sync_to_db()
+        try:
+            logger.info("开始定期数据同步...")
+            
+            # 尝试同步到数据库
+            if enhanced_local_cache.sync_to_db_with_fallback():
+                logger.info("定期数据同步成功")
+                retry_count = 0  # 重置重试计数
+            else:
+                logger.warning("定期数据同步失败，使用临时存储")
+                
+        except Exception as e:
+            logger.error(f"定期数据同步异常: {str(e)}")
+            retry_count += 1
+            
+            if retry_count >= max_retries:
+                logger.error("达到最大重试次数，暂停同步一段时间")
+                time.sleep(300)  # 暂停5分钟
+                retry_count = 0
+                
         time.sleep(60)  # 每分钟同步一次
 
-# 服务器关闭时的同步函数
+# 服务器关闭时的同步函数 - 增强版本
 def sync_on_shutdown():
-    """服务器关闭时同步数据到数据库"""
-    print("正在同步数据到数据库...")
-    local_cache.sync_to_db()
-    print("数据同步完成")
-
-# 初始化本地缓存
-def init_local_cache():
-    """初始化本地缓存，从数据库加载数据"""
-    db = SessionLocal()
+    """服务器关闭时同步数据到数据库，支持重连和回退"""
+    logger.info("正在同步数据到数据库...")
     try:
-        local_cache.load_from_db(db)
-    finally:
-        db.close()
+        if enhanced_local_cache.sync_to_db_with_fallback():
+            logger.info("数据同步完成")
+        else:
+            logger.warning("数据同步失败，数据已保存到临时存储")
+    except Exception as e:
+        logger.error(f"关闭时数据同步异常: {str(e)}")
+        logger.warning("数据可能未完全同步，请检查临时存储")
+
+# 初始化增强本地缓存
+def init_enhanced_local_cache():
+    """初始化增强本地缓存，支持数据库重连和临时存储回退"""
+    logger.info("开始初始化增强本地缓存...")
+    try:
+        if enhanced_local_cache.load_from_db_with_fallback():
+            logger.info("增强本地缓存初始化成功")
+        else:
+            logger.warning("增强本地缓存初始化失败，将使用空缓存启动")
+            # 即使初始化失败也继续启动，避免应用无法启动
+            
+    except Exception as e:
+        logger.error(f"增强本地缓存初始化异常: {str(e)}")
+        logger.warning("将使用空缓存启动，数据库连接恢复后会自动同步数据")
 
 # 导入路由
-from routers import stories, comments, discussions, auth, admin
+from routers import stories, comments, discussions, auth, admin, health
 # 创建FastAPI应用
 app = FastAPI()
 # 配置CORS
@@ -76,14 +115,16 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # 初始化数据库 - 注释掉自动调用，避免消耗查询次数
 # init_db()
 
-# 初始化本地缓存
-init_local_cache()
+# 初始化增强本地缓存
+init_enhanced_local_cache()
 
-# 启动定时同步线程
-sync_thread = threading.Thread(target=sync_to_db_periodically, daemon=True)
+# 启动增强的定时同步线程
+logger.info("启动增强的定时同步线程...")
+sync_thread = threading.Thread(target=sync_to_db_periodically, daemon=True, name="EnhancedSyncThread")
 sync_thread.start()
 
 # 注册服务器关闭时的同步函数
+logger.info("注册关闭时的同步函数")
 atexit.register(sync_on_shutdown)
 
 # 包含路由
@@ -92,12 +133,56 @@ app.include_router(stories.router)
 app.include_router(comments.router)
 app.include_router(discussions.router)
 app.include_router(admin.router)
+app.include_router(health.router)
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request, db: Session = Depends(get_db)):
-    # 从本地缓存获取所有故事
-    stories = get_all_stories(db)
-    discussions = get_all_discussions(db)
-    current_user = await get_current_user(request, db)
+    """增强的根路由，支持数据库连接问题时的优雅降级"""
+    try:
+        # 检查数据库连接状态
+        if not enhanced_local_cache.is_db_available():
+            logger.warning("数据库连接不可用，使用本地缓存数据")
+            
+        # 从增强本地缓存获取数据
+        stories_data = enhanced_local_cache.data.get("stories", {})
+        discussions_data = enhanced_local_cache.data.get("discussions", {})
+        
+        # 转换数据格式
+        stories = list(stories_data.values())
+        discussions = list(discussions_data.values())
+        
+        # 尝试获取当前用户信息
+        current_user = None
+        try:
+            current_user = await get_current_user(request, db)
+        except Exception as e:
+            logger.warning(f"获取用户信息失败: {str(e)}")
+            # 继续处理，即使用户信息获取失败
+            
+        # 生成故事摘要
+        for story in stories:
+            if 'content' in story:
+                story['excerpt'] = generate_story_excerpt(story['content'])
+                
+        return templates.TemplateResponse("index.html", {
+            "request": request,
+            "stories": stories,
+            "discussions": discussions,
+            "current_user": current_user
+        })
+        
+    except Exception as e:
+        logger.error(f"处理根路由请求失败: {str(e)}")
+        # 返回一个基本的错误页面
+        return HTMLResponse(content=f"""
+        <html>
+        <head><title>服务暂时不可用</title></head>
+        <body>
+            <h1>服务暂时不可用</h1>
+            <p>我们正在努力恢复服务，请稍后再试。</p>
+            <p>错误信息: {str(e)}</p>
+        </body>
+        </html>
+        """, status_code=503)
     
     # 为故事添加渲染内容
     story_with_authors = []
