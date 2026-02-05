@@ -5,6 +5,7 @@ from database import get_db, UserDB
 from crud import create_user, get_user_by_username, get_user_by_email, update_user_active_count
 from sqlalchemy.orm import Session
 import bcrypt
+from local_cache import local_cache
 router = APIRouter()
 @router.get("/register", response_class=HTMLResponse)
 
@@ -21,6 +22,14 @@ async def register(
     password: str = Form(...),
     db: Session = Depends(get_db)
 ):
+    # 获取客户端IP地址
+    client_ip = request.client.host if request.client else "unknown"
+    # 检查IP注册频率限制
+    if not local_cache.check_ip_rate_limit(client_ip):
+        return templates.TemplateResponse(
+            "register.html",
+            {"request": request, "error": "注册太过频繁，请5分钟后再试"}
+        )
     # 检查用户名是否已存在
     if get_user_by_username(db, username):
         return templates.TemplateResponse(

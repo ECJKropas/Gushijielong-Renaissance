@@ -7,6 +7,7 @@ from sqlalchemy import (
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker, relationship
 from datetime import datetime
+import time
 
 # 加载环境变量
 load_dotenv()
@@ -18,26 +19,75 @@ MYSQL_USER = os.getenv("MYSQL_USER")
 MYSQL_PASSWORD = os.getenv("MYSQL_PASSWORD")
 MYSQL_DATABASE = os.getenv("MYSQL_DATABASE")
 
+# 数据库状态标志
+DB_AVAILABLE = True
+LAST_DB_CHECK = 0
+DB_CHECK_INTERVAL = 30  # 30秒检查一次数据库状态
+
 # 创建MySQL数据库引擎
 DATABASE_URL = f"mysql+pymysql://{MYSQL_USER}:{MYSQL_PASSWORD}@{MYSQL_HOST}:{MYSQL_PORT}/{MYSQL_DATABASE}?charset=utf8mb4"
 # 尝试使用NullPool，避免连接池管理的查询开销
 from sqlalchemy.pool import NullPool
-engine = create_engine(
-    DATABASE_URL,
-    echo=False,  # 关闭SQL日志输出，减少查询次数
-    poolclass=NullPool,  # 使用NullPool，每次请求创建新连接，避免连接池查询
-    connect_args={
-        'charset': 'utf8mb4',
-        'connect_timeout': 10,
-        'read_timeout': 30,
-        'write_timeout': 30,
-        'ssl_ca': None,  # 使用系统CA证书启用SSL连接
-    }  # 连接参数优化
-)
+
+# 尝试创建引擎
+engine = None
+try:
+    engine = create_engine(
+        DATABASE_URL,
+        echo=False,  # 关闭SQL日志输出，减少查询次数
+        poolclass=NullPool,  # 使用NullPool，每次请求创建新连接，避免连接池查询
+        connect_args={
+            'charset': 'utf8mb4',
+            'connect_timeout': 10,
+            'read_timeout': 30,
+            'write_timeout': 30,
+            'ssl_ca': None,  # 使用系统CA证书启用SSL连接
+        }  # 连接参数优化
+    )
+    # 测试连接
+    with engine.connect() as conn:
+        conn.execute("SELECT 1")
+    print("数据库连接成功")
+except Exception as e:
+    print(f"数据库连接失败: {e}")
+    DB_AVAILABLE = False
+
 # 创建会话工厂
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine) if engine else None
 # 创建基础模型
 Base = declarative_base()
+
+# 检查数据库状态
+def check_db_status():
+    """检查数据库是否可用"""
+    global DB_AVAILABLE, LAST_DB_CHECK
+    current_time = time.time()
+    
+    # 避免频繁检查
+    if current_time - LAST_DB_CHECK < DB_CHECK_INTERVAL:
+        return DB_AVAILABLE
+    
+    LAST_DB_CHECK = current_time
+    
+    if not engine:
+        DB_AVAILABLE = False
+        return False
+    
+    try:
+        with engine.connect() as conn:
+            conn.execute("SELECT 1")
+        DB_AVAILABLE = True
+        print("数据库连接正常")
+    except Exception as e:
+        DB_AVAILABLE = False
+        print(f"数据库连接失败: {e}")
+    
+    return DB_AVAILABLE
+
+# 获取数据库可用性状态
+def is_db_available():
+    """获取数据库可用性状态"""
+    return DB_AVAILABLE
 # 用户模型
 
 
@@ -134,12 +184,27 @@ class DiscussionCommentDB(Base):
 
 
 
+# 模拟会话类，用于数据库不可用时
+class MockSession:
+    """模拟数据库会话，用于数据库不可用时"""
+    def close(self):
+        pass
+
+# 获取数据库会话
 def get_db():
-    db = SessionLocal()
-    try:
-        yield db
-    finally:
-        db.close()
+    """获取数据库会话，数据库不可用时返回模拟会话"""
+    # 检查数据库状态
+    if check_db_status() and SessionLocal:
+        # 数据库可用，返回真实会话
+        db = SessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
+    else:
+        # 数据库不可用，返回模拟会话
+        print("数据库不可用，使用本地缓存")
+        yield MockSession()
 
 
 

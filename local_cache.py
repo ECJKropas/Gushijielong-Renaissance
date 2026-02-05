@@ -1,7 +1,7 @@
 import os
 import json
 import threading
-from datetime import datetime
+from datetime import datetime, timedelta
 from database import SessionLocal
 from sqlalchemy.orm import Session
 
@@ -32,8 +32,32 @@ class LocalCache:
             "discussions": set(),
             "discussion_comments": set()
         }
+        # IP限流缓存
+        self.ip_register_times = {}
         self.lock = threading.Lock()
         self.last_sync_time = datetime.now()
+    
+    def check_ip_rate_limit(self, ip_address):
+        """检查IP地址的注册频率限制
+        返回True表示通过限制，False表示频率过高
+        """
+        with self.lock:
+            current_time = datetime.now()
+            # 清理过期的IP记录
+            expired_ips = []
+            for ip, register_time in self.ip_register_times.items():
+                if current_time - register_time > timedelta(minutes=5):
+                    expired_ips.append(ip)
+            for ip in expired_ips:
+                del self.ip_register_times[ip]
+            
+            # 检查当前IP是否在限制内
+            if ip_address in self.ip_register_times:
+                return False
+            
+            # 记录当前IP的注册时间
+            self.ip_register_times[ip_address] = current_time
+            return True
     
     def _get_class_by_table(self, table_name):
         """根据表名获取对应的数据库模型类"""
@@ -228,6 +252,17 @@ class LocalCache:
     
     def sync_to_db(self):
         """将本地修改同步到数据库"""
+        # 检查数据库是否可用
+        from database import is_db_available
+        if not is_db_available():
+            print("数据库不可用，跳过同步操作")
+            return False
+        
+        from database import SessionLocal
+        if not SessionLocal:
+            print("数据库引擎未初始化，跳过同步操作")
+            return False
+        
         db = SessionLocal()
         try:
             with self.lock:
