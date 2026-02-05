@@ -74,8 +74,6 @@ async def create_discussion_form(request: Request, db: Session = Depends(get_db)
         {"request": request, "current_user": current_user}
     )
 @router.post("/create-discussion")
-
-
 async def create_new_discussion(
     request: Request,
     title: str = Form(...),
@@ -90,11 +88,11 @@ async def create_new_discussion(
         db=db,
         title=title,
         content=content,
-        author_id=current_user.id,
-        author_name=current_user.username
+        author_id=current_user["id"],
+        author_name=current_user["username"]
     )
     # 更新用户活跃次数
-    update_user_active_count(db, current_user.id)
+    update_user_active_count(db, current_user["id"])
     return RedirectResponse(url=f"/discussions/{discussion.id}", status_code=303)
 @router.post("/discussions/{discussion_id}/comment")
 

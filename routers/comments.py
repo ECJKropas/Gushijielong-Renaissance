@@ -6,8 +6,6 @@ from models import get_current_user
 from sqlalchemy.orm import Session
 router = APIRouter()
 @router.post("/stories/{story_id}/chapters/{chapter_id}/comment")
-
-
 async def add_chapter_comment(
     request: Request,
     story_id: int,
@@ -15,7 +13,7 @@ async def add_chapter_comment(
     content: str = Form(...),
     db: Session = Depends(get_db)
 ):
-    current_user = await get_current_user(request)
+    current_user = await get_current_user(request, db)
     if not current_user:
         return RedirectResponse(url="/login", status_code=303)
     # 创建评论
@@ -23,11 +21,11 @@ async def add_chapter_comment(
         db=db,
         chapter_id=chapter_id,
         content=content,
-        author_id=current_user.id,
-        author_name=current_user.username
+        author_id=current_user["id"],
+        author_name=current_user["username"]
     )
     # 更新用户活跃次数
-    update_user_active_count(db, current_user.id)
+    update_user_active_count(db, current_user["id"])
     return RedirectResponse(url=f"/stories/{story_id}#{chapter_id}", status_code=303)
 
 
