@@ -216,3 +216,39 @@ async def delete_tree_node(request: Request, node_id: int, db: Session = Depends
         enhanced_local_cache.data["cached_trees"] = {}
     
     return {"id": node_id, "message": "节点删除成功"}
+
+# 故事树探索模式
+@router.get("/tree/explore/{node_id}", response_class=HTMLResponse)
+async def get_tree_explore(request: Request, node_id: int, former_text: str = "", db: Session = Depends(get_db)):
+    current_user = await get_current_user(request, db)
+    
+    # 获取当前节点
+    current_node = enhanced_local_cache.data.get("story_tree_nodes", {}).get(node_id)
+    if not current_node:
+        raise HTTPException(status_code=404, detail="节点不存在")
+    
+    # 渲染当前节点的内容
+    current_node["content_html"] = markdown.markdown(current_node["content"])
+    
+    # 获取子节点
+    children = []
+    for child_id, child_data in enhanced_local_cache.data.get("story_tree_nodes", {}).items():
+        if child_data.get("parent_id") == node_id:
+            children.append(child_data)
+    
+    # 构建完整的前文本
+    full_former_text = former_text
+    if full_former_text and not full_former_text.endswith("\n\n"):
+        full_former_text += "\n\n"
+    
+    # 渲染前文本
+    former_text_html = markdown.markdown(full_former_text) if full_former_text else ""
+    
+    return templates.TemplateResponse("tree_explore.html", {
+        "request": request,
+        "current_node": current_node,
+        "children": children,
+        "former_text": full_former_text,
+        "former_text_html": former_text_html,
+        "current_user": current_user
+    })

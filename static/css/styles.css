@@ -664,3 +664,164 @@ footer {
         font-size: 0.85rem;
     }
 }
+
+/* ===== 故事树探索模式样式 ===== */
+
+/* 探索模式容器 */
+.explore-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+/* 前文本样式 */
+.former-text {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.former-text h3 {
+    color: #667eea;
+    margin-bottom: 1rem;
+}
+
+/* 当前节点样式 */
+.current-node {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.current-node h3 {
+    color: #ff6b6b;
+    margin-bottom: 1rem;
+}
+
+.current-node .node-content {
+    margin-bottom: 1rem;
+}
+
+/* 子节点选项样式 */
+.children-options {
+    margin-bottom: 2rem;
+}
+
+.children-options h3 {
+    color: #48bb78;
+    margin-bottom: 1.5rem;
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+}
+
+.option-card {
+    display: block;
+    padding: 1.5rem;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+    color: #2d3748;
+    transition: all 0.3s ease;
+}
+
+.option-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+    background-color: #f7fafc;
+}
+
+.option-card .option-title {
+    font-weight: bold;
+    margin-bottom: 0.5rem;
+    color: #667eea;
+}
+
+.option-card .node-title {
+    font-size: 0.9rem;
+    color: #4a5568;
+}
+
+/* 无分支样式 */
+.no-children {
+    margin-bottom: 2rem;
+    padding: 1.5rem;
+    background-color: rgba(255, 255, 255, 0.9);
+    border-radius: 12px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+.no-children h3 {
+    color: #f56565;
+    margin-bottom: 1rem;
+}
+
+/* 导航样式 */
+.navigation {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 2px solid #e2e8f0;
+}
+
+.navigation a {
+    display: inline-block;
+    margin-right: 1rem;
+    padding: 0.5rem 1rem;
+    background-color: #667eea;
+    color: white;
+    text-decoration: none;
+    border-radius: 15px;
+    font-weight: bold;
+    transition: all 0.3s ease;
+}
+
+.navigation a:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+}
+
+.navigation a:last-child {
+    margin-right: 0;
+    background-color: #48bb78;
+}
+
+.navigation a:last-child:hover {
+    box-shadow: 0 4px 8px rgba(72, 187, 120, 0.3);
+}
+
+/* 响应式探索模式 */
+@media (max-width: 768px) {
+    .explore-container {
+        padding: 1rem;
+    }
+    
+    .former-text,
+    .current-node,
+    .no-children {
+        padding: 1rem;
+    }
+    
+    .options-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .option-card {
+        padding: 1rem;
+    }
+    
+    .navigation a {
+        display: block;
+        margin-right: 0;
+        margin-bottom: 1rem;
+        text-align: center;
+    }
+}

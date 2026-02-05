@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}故事树探索 - {{ current_node.title }}{% endblock %}
+
+{% block content %}
+<div class="explore-container">
+    <h2 style="color: #ff6b6b; margin-bottom: 2rem;">故事树探索模式</h2>
+    
+    {% if former_text_html %}
+    <div class="former-text">
+        <h3>故事背景</h3>
+        <div>{{ former_text_html|safe }}</div>
+    </div>
+    {% endif %}
+    
+    <div class="current-node">
+        <h3>{{ current_node.title }}</h3>
+        <div class="node-content">{{ current_node.content_html|safe }}</div>
+        <p style="font-size: 0.9rem; color: #888;">
+            创建于: {{ current_node.created_at }}
+        </p>
+    </div>
+    
+    {% if children %}
+    <div class="children-options">
+        <h3>选择分支</h3>
+        <div class="options-grid">
+            {% for child in children %}
+            {% set new_former_text = former_text ~ current_node.title ~ "\n" ~ current_node.content ~ "\n\n" ~ child.option_title ~ "\n" %}
+            <a href="/tree/explore/{{ child.id }}?former_text={{ new_former_text|urlencode }}" class="option-card">
+                <div class="option-title">{{ child.option_title }}</div>
+                <div class="node-title">{{ child.title }}</div>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="no-children">
+        <h3>故事结束</h3>
+        <p>没有更多分支了，故事到此结束。</p>
+        <a href="/tree" style="display: inline-block; margin-top: 1.5rem; padding: 0.75rem 1.5rem; background-color: #ff9ff3; color: white; text-decoration: none; border-radius: 25px; font-weight: bold; transition: all 0.3s ease;">返回故事树</a>
+    </div>
+    {% endif %}
+    
+    <div class="navigation">
+        <a href="/tree">返回故事树</a>
+        {% if current_node.parent_id %}
+        <a href="/tree/explore/{{ current_node.parent_id }}">返回上一级</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
