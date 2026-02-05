@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}故事树 - 起始节点{% endblock %}
+
+{% block content %}
+<div class="main-content">
+    <h2 style="color: #ff6b6b; margin-bottom: 1.5rem;">故事树</h2>
+    
+    {% if current_user %}
+    <a href="#create-node" class="create-story-btn">创建新起点</a>
+    
+    <form id="create-node" style="margin-top: 2rem;">
+        <h3 style="color: #ff6b6b; margin-bottom: 1rem;">创建新起点</h3>
+        <div>
+            <label for="title">标题</label>
+            <input type="text" id="title" name="title" required>
+        </div>
+        <div>
+            <label for="option_title">选项标题</label>
+            <input type="text" id="option_title" name="option_title" required>
+        </div>
+        <div>
+            <label for="content">内容（支持Markdown）</label>
+            <textarea id="content" name="content" rows="5" required></textarea>
+        </div>
+        <button type="submit">创建</button>
+    </form>
+    {% else %}
+    <div class="login-prompt">
+        <p>登录后可以创建新的故事起点</p>
+        <a href="/login">去登录</a>
+    </div>
+    {% endif %}
+    
+    <h3 style="color: #ff6b6b; margin-top: 2rem; margin-bottom: 1rem;">故事起点列表</h3>
+    
+    {% if root_nodes %}
+    <div class="story-list">
+        <ul>
+            {% for node in root_nodes %}
+            <li>
+                <h3>{{ node.title }}</h3>
+                <p><strong>选项标题:</strong> {{ node.option_title }}</p>
+                <div class="story-excerpt">
+                    {{ node.content[:100] }}{% if node.content|length > 100 %}...{% endif %}
+                </div>
+                <p style="margin-top: 0.5rem; font-size: 0.9rem; color: #888;">
+                    创建于: {{ node.created_at }}
+                </p>
+                <a href="/tree/node/{{ node.id }}" style="display: inline-block; margin-top: 1rem; padding: 0.5rem 1rem; background-color: #ff9ff3; color: white; text-decoration: none; border-radius: 20px; font-weight: bold;">
+                    查看故事树
+                </a>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% else %}
+    <p>暂无故事起点，成为第一个创建者吧！</p>
+    {% endif %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('create-node');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                const formData = new FormData(form);
+                
+                fetch('/tree/node', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.id) {
+                        alert('创建成功！');
+                        window.location.reload();
+                    } else {
+                        alert('创建失败：' + data.message);
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('创建失败，请重试');
+                });
+            });
+        }
+    });
+</script>
+{% endblock %}

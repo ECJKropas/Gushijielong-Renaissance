@@ -108,6 +108,7 @@ class UserDB(Base):
     chapter_comments = relationship("ChapterCommentDB", back_populates="author")
     discussions = relationship("DiscussionDB", back_populates="author")
     discussion_comments = relationship("DiscussionCommentDB", back_populates="author")
+    story_tree_nodes = relationship("StoryTreeNodeDB", back_populates="author")
 # 故事模型
 
 
@@ -180,6 +181,22 @@ class DiscussionCommentDB(Base):
     # 关系
     discussion = relationship("DiscussionDB", back_populates="comments")
     author = relationship("UserDB", back_populates="discussion_comments")
+
+
+# 故事树节点模型
+
+
+class StoryTreeNodeDB(Base):
+    __tablename__ = "story_tree_nodes"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String(200), nullable=False)
+    option_title = Column(String(200), nullable=False)
+    content = Column(Text, nullable=False)
+    parent_id = Column(Integer, nullable=True)  # 根节点的parent_id为None
+    author_id = Column(Integer, ForeignKey("users.id"), nullable=False)
+    created_at = Column(DateTime, default=datetime.now)
+    # 关系
+    author = relationship("UserDB", back_populates="story_tree_nodes")
 # 数据库操作函数
 
 
@@ -289,6 +306,18 @@ def migrate_data_from_memory(data_store):
                 created_at=comment_data.created_at
             )
             db.add(comment)
+        # 迁移故事树节点数据
+        for node_data in data_store.get("story_tree_nodes", []):
+            node = StoryTreeNodeDB(
+                id=node_data.id,
+                title=node_data.title,
+                option_title=node_data.option_title,
+                content=node_data.content,
+                parent_id=node_data.parent_id,
+                author_id=node_data.author_id,
+                created_at=node_data.created_at
+            )
+            db.add(node)
         db.commit()
         print("数据迁移完成")
         return True

@@ -101,6 +101,19 @@ class DiscussionComment:
         self.author = author
         self.author_id = author_id
         self.created_at = datetime.now()
+
+
+class StoryTreeNode:
+
+
+    def __init__(self, id: int, title: str, option_title: str, content: str, parent_id: int, author_id: int):
+        self.id = id
+        self.title = title
+        self.option_title = option_title
+        self.content = content
+        self.parent_id = parent_id
+        self.author_id = author_id
+        self.created_at = datetime.now()
 # 内存存储（用于数据迁移前的临时存储）
 data_store = {
     "users": [],
@@ -108,7 +121,8 @@ data_store = {
     "chapters": [],
     "chapter_comments": [],
     "discussions": [],
-    "discussion_comments": []
+    "discussion_comments": [],
+    "story_tree_nodes": []
 }
 # 计数器
 counters = {
@@ -117,7 +131,8 @@ counters = {
     "chapter": 1,
     "chapter_comment": 1,
     "discussion": 1,
-    "discussion_comment": 1
+    "discussion_comment": 1,
+    "story_tree_node": 1
 }
 
 

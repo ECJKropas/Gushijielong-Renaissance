@@ -99,7 +99,7 @@ def init_enhanced_local_cache():
         logger.warning("将使用空缓存启动，数据库连接恢复后会自动同步数据")
 
 # 导入路由
-from routers import stories, comments, discussions, auth, admin, health
+from routers import stories, comments, discussions, auth, admin, health, tree
 # 创建FastAPI应用
 app = FastAPI()
 # 配置CORS
@@ -134,6 +134,7 @@ app.include_router(comments.router)
 app.include_router(discussions.router)
 app.include_router(admin.router)
 app.include_router(health.router)
+app.include_router(tree.router)
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request, db: Session = Depends(get_db)):
     """增强的根路由，支持数据库连接问题时的优雅降级"""

@@ -18,7 +18,8 @@ class EnhancedLocalCache:
             "story_chapters": {},
             "chapter_comments": {},
             "discussions": {},
-            "discussion_comments": {}
+            "discussion_comments": {},
+            "story_tree_nodes": {}
         }
         
         # 修改跟踪
@@ -28,7 +29,8 @@ class EnhancedLocalCache:
             "story_chapters": set(),
             "chapter_comments": set(),
             "discussions": set(),
-            "discussion_comments": set()
+            "discussion_comments": set(),
+            "story_tree_nodes": set()
         }
         
         # 删除跟踪
@@ -38,7 +40,8 @@ class EnhancedLocalCache:
             "story_chapters": set(),
             "chapter_comments": set(),
             "discussions": set(),
-            "discussion_comments": set()
+            "discussion_comments": set(),
+            "story_tree_nodes": set()
         }
         
         # IP限流缓存
@@ -79,7 +82,8 @@ class EnhancedLocalCache:
             StoryChapterDB,
             ChapterCommentDB,
             DiscussionDB,
-            DiscussionCommentDB
+            DiscussionCommentDB,
+            StoryTreeNodeDB
         )
         
         table_class_map = {
@@ -88,7 +92,8 @@ class EnhancedLocalCache:
             "story_chapters": StoryChapterDB,
             "chapter_comments": ChapterCommentDB,
             "discussions": DiscussionDB,
-            "discussion_comments": DiscussionCommentDB
+            "discussion_comments": DiscussionCommentDB,
+            "story_tree_nodes": StoryTreeNodeDB
         }
         return table_class_map.get(table_name)
         
@@ -184,6 +189,19 @@ class EnhancedLocalCache:
                             "user_id": comment.user_id,
                             "content": comment.content,
                             "created_at": comment.created_at.isoformat() if comment.created_at else None
+                        }
+                    
+                    # 加载故事树节点
+                    story_tree_nodes = session.query(StoryTreeNodeDB).all()
+                    for node in story_tree_nodes:
+                        self.data["story_tree_nodes"][node.id] = {
+                            "id": node.id,
+                            "title": node.title,
+                            "option_title": node.option_title,
+                            "content": node.content,
+                            "parent_id": node.parent_id,
+                            "author_id": node.author_id,
+                            "created_at": node.created_at.isoformat() if node.created_at else None
                         }
                 
                 return True
